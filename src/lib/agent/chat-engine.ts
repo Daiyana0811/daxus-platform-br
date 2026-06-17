@@ -259,6 +259,124 @@ function isTechnicalCourseSupportQuestion(message: string): boolean {
   return asksForTechnicalHelp && courseContentContext;
 }
 
+function isStudyPlanRelatedMessage(message: string): boolean {
+  const text = normalizeForSearch(message);
+  if (!text) return true;
+  if (/^\[arquivo:/i.test(message.trim())) return true;
+
+  const inScopeTerms = [
+    'pdi',
+    'plano de desenvolvimento',
+    'plano de estudo',
+    'plano de estudos',
+    'plan de estudio',
+    'plan de estudios',
+    'trilha',
+    'ruta',
+    'rota',
+    'curso',
+    'cursos',
+    'daxus',
+    'pdf',
+    'download',
+    'baixar',
+    'descargar',
+    'objetivo',
+    'meta',
+    'carreira',
+    'carrera',
+    'profissional',
+    'profesional',
+    'experiencia',
+    'estudos',
+    'estudios',
+    'habilidades',
+    'conhecimentos',
+    'conocimientos',
+    'curriculo',
+    'curriculum',
+    'cv',
+    'perfil',
+    'disponibilidade',
+    'disponibilidad',
+    'horas',
+    'prazo',
+    'plazo',
+    'meses',
+    'semanas',
+    'linkedin',
+    'excel',
+    'power bi',
+    'sql',
+    'python',
+    'ia',
+    'inteligencia artificial',
+    'automacao',
+    'automatizar',
+    'no code',
+    'nocode',
+    'low code',
+    'lideranca',
+    'liderazgo',
+    'comunicacao',
+    'comunicacion',
+  ];
+
+  if (inScopeTerms.some((term) => text.includes(normalizeForSearch(term)))) {
+    return true;
+  }
+
+  const shortConversationalAnswer =
+    text.length <= 90 &&
+    !/[?¿]/.test(message) &&
+    !/^(dime|me diga|cuentame|conte|explique|explica|haz|faca|escreva|escribe|traduce|traduza|resume|resuma)\b/i.test(text);
+
+  return shortConversationalAnswer;
+}
+
+function isOutOfScopeRequest(message: string): boolean {
+  if (isStudyPlanRelatedMessage(message)) return false;
+
+  const text = normalizeForSearch(message);
+  const looksLikeQuestion =
+    /[?¿]/.test(message) ||
+    /^(que|quem|quien|como|qual|cu[aá]l|cuando|cu[aá]ndo|donde|d[oó]nde|por que|porque|why|what|how|when|where)\b/i.test(text);
+  const offTopicRequestTerms = [
+    'chiste',
+    'piada',
+    'joke',
+    'receta',
+    'receita',
+    'clima',
+    'weather',
+    'noticias',
+    'news',
+    'politica',
+    'futbol',
+    'pelicula',
+    'filme',
+    'musica',
+    'poema',
+    'cuento',
+    'historia',
+    'capital de',
+    'traduce',
+    'traduza',
+    'resuelve',
+    'resolva',
+    'calcula',
+    'codigo',
+    'programa',
+    'email de ventas',
+    'copy',
+  ];
+  const looksLikeOffTopicCommand = offTopicRequestTerms.some((term) =>
+    text.includes(normalizeForSearch(term)),
+  );
+
+  return looksLikeQuestion || looksLikeOffTopicCommand;
+}
+
 function clientMessagesToMessages(
   conversationId: string,
   clientMessages?: ClientChatMessage[]
@@ -356,6 +474,13 @@ export async function processMessage(
       'Essa duvida tecnica do conteudo do curso deve ser revisada na comunidade Circle ou no espaco academico do curso, onde podem ajudar com codigo, exercicios, erros e configuracoes. Eu posso ajudar a ajustar seu PDI se essa dificuldade mudar seu objetivo, nivel atual ou ordem da trilha. Voce quer ajustar seu PDI a partir dessa duvida?';
     await saveMessage(conversationId, 'assistant', redirectMessage);
     return staticAssistantStream(redirectMessage);
+  }
+
+  if (isOutOfScopeRequest(userMessage)) {
+    const scopeMessage =
+      'Posso ajudar apenas com o seu PDI: diagnostico do perfil, trilha de estudos, cursos Daxus, disponibilidade, PDF ou ajustes do plano. Se quiser, me diga o que deseja ajustar na sua trilha de estudos.';
+    await saveMessage(conversationId, 'assistant', scopeMessage);
+    return staticAssistantStream(scopeMessage);
   }
 
   // 3. Load conversation history

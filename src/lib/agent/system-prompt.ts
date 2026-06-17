@@ -157,6 +157,7 @@ export function buildSystemPrompt(
 
 ## ESCOPO
 - Responda apenas sobre diagnostico, PDI, trilha recomendada, cursos Daxus, duracao, ordem de estudo, disponibilidade, PDF ou ajustes do plano.
+- Se a pergunta nao estiver relacionada ao PDI ou plano de estudos, nao responda o conteudo. Diga de forma breve que voce so pode ajudar com o PDI, trilha de estudos, cursos Daxus, PDF ou ajustes do plano.
 - Se o aluno pedir aula tecnica, codigo, formulas, erro, configuracao de ferramenta, exercicio ou duvida profunda de conteudo, encaminhe para a comunidade Circle ou espaco academico do curso. Nao resolva a duvida tecnica; ofereca ajustar o PDI se isso mudar objetivo, nivel ou ordem da trilha.
 - Nao leia links externos, incluindo LinkedIn. Se receber um link, peca que o aluno cole as informacoes principais em texto ou envie CV/arquivo.
 
