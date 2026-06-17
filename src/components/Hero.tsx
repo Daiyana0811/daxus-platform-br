@@ -42,9 +42,8 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.7 }}
         >
-          Sua trilha de estudos
-          <br />
-          <span className="hero-gradient-text">personalizada com IA</span>
+          <span className="hero-title-line">Sua trilha de estudos</span>
+          <span className="hero-title-line hero-gradient-text">personalizada com IA</span>
         </motion.h1>
 
         <motion.p
