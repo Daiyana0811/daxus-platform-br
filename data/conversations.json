@@ -1,0 +1,58 @@
+[
+  {
+    "id": "1778624347675-7wirbjv",
+    "user_id": "1778624347674-n66mncj",
+    "started_at": "2026-05-12T22:19:07.675Z",
+    "updated_at": "2026-05-12T22:19:21.678Z",
+    "status": "active",
+    "extracted_profile": null
+  },
+  {
+    "id": "1778624598511-4ci1kms",
+    "user_id": "1778624598510-2uap073",
+    "started_at": "2026-05-12T22:23:18.511Z",
+    "updated_at": "2026-05-12T22:44:17.862Z",
+    "status": "completed",
+    "extracted_profile": null
+  },
+  {
+    "id": "1778625571001-ux8aegk",
+    "user_id": "1778625571000-7l1prlj",
+    "started_at": "2026-05-12T22:39:31.001Z",
+    "updated_at": "2026-05-12T22:39:33.407Z",
+    "status": "active",
+    "extracted_profile": null
+  },
+  {
+    "id": "1778625584905-3iwg1ze",
+    "user_id": "1778625584904-f7808ik",
+    "started_at": "2026-05-12T22:39:44.905Z",
+    "updated_at": "2026-05-12T22:41:11.017Z",
+    "status": "active",
+    "extracted_profile": null
+  },
+  {
+    "id": "1778626104261-4wlpuii",
+    "user_id": "1778626104258-kbesobu",
+    "started_at": "2026-05-12T22:48:24.261Z",
+    "updated_at": "2026-05-12T22:48:24.261Z",
+    "status": "active",
+    "extracted_profile": null
+  },
+  {
+    "id": "1778626261091-6eaxcis",
+    "user_id": "1778626261090-c91oj6j",
+    "started_at": "2026-05-12T22:51:01.091Z",
+    "updated_at": "2026-05-12T22:51:04.747Z",
+    "status": "active",
+    "extracted_profile": null
+  },
+  {
+    "id": "1778626459792-vvwsp2a",
+    "user_id": "1778626459792-w4krwqq",
+    "started_at": "2026-05-12T22:54:19.792Z",
+    "updated_at": "2026-05-12T22:58:26.537Z",
+    "status": "completed",
+    "extracted_profile": null
+  }
+]

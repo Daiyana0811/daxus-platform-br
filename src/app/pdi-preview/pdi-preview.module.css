@@ -1,0 +1,257 @@
+.previewShell {
+  min-height: 100vh;
+  background: #17233f;
+  color: #17233f;
+  font-family: 'Inter', Arial, sans-serif;
+  padding: 24px 0 56px;
+}
+
+.toolbar {
+  align-items: center;
+  color: #ffffff;
+  display: flex;
+  font-family: 'Inter', Arial, sans-serif;
+  gap: 14px;
+  justify-content: center;
+  margin: 0 auto 22px;
+}
+
+.toolbar span {
+  color: #b9c5d9;
+  font-size: 13px;
+}
+
+.document {
+  display: grid;
+  gap: 22px;
+  justify-content: center;
+}
+
+.page {
+  aspect-ratio: 1080 / 1536;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  position: relative;
+  width: min(760px, calc(100vw - 32px));
+}
+
+.fullImage {
+  display: block;
+  height: 100%;
+  inset: 0;
+  object-fit: fill;
+  position: absolute;
+  width: 100%;
+}
+
+.coverStudentName {
+  color: #34AEEE;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: clamp(28px, 4.5vw, 52px);
+  font-weight: 800;
+  left: 12%;
+  line-height: 1.08;
+  position: absolute;
+  right: 12%;
+  text-align: center;
+  top: 37.9%;
+}
+
+.letterheadPage {
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.letterheadPage * {
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.routeContent {
+  left: 10%;
+  position: absolute;
+  right: 10%;
+  top: 11%;
+}
+
+.profileBox {
+  background: #0c1e3b;
+  border: 1px solid rgba(164, 164, 255, 0.26);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(12, 30, 59, 0.18);
+  font-family: 'Inter', Arial, sans-serif;
+  padding: 16px 20px 18px;
+}
+
+.profileBox * {
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.kicker {
+  color: #a4a4ff;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: clamp(10px, 1.4vw, 16px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0 0 14px;
+  text-transform: uppercase;
+}
+
+.profileGrid {
+  display: grid;
+  gap: 14px 28px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.profileGrid div {
+  display: grid;
+  gap: 4px;
+}
+
+.profileGrid strong {
+  color: #ffffff;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 700;
+}
+
+.profileGrid span {
+  color: #ddeff2;
+  font-family: 'Inter', Arial, sans-serif;
+  font-weight: 400;
+  font-size: clamp(10px, 1.2vw, 14px);
+  line-height: 1.28;
+}
+
+.routeContent h1 {
+  color: #111827;
+  font-size: clamp(18px, 2.2vw, 28px);
+  line-height: 1.08;
+  margin: 26px 0 16px;
+}
+
+.courseList {
+  display: grid;
+  gap: 12px;
+}
+
+.courseCard {
+  align-items: flex-start;
+  background: #eeeeee;
+  border: 1px solid #dce7ef;
+  border-left: 5px solid rgba(36, 36, 36, 0.8);
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 44px 92px 1fr;
+  min-height: 108px;
+  padding: 14px 20px;
+}
+
+.order {
+  align-items: center;
+  background: rgba(36, 36, 36, 0.8);
+  border-radius: 999px;
+  color: #ffffff;
+  display: flex;
+  font-size: clamp(12px, 1.6vw, 18px);
+  font-weight: 800;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.thumbWrap {
+  align-items: center;
+  background: #eef7f7;
+  border: 1px solid #dce7ef;
+  border-radius: 8px;
+  display: flex;
+  height: 96px;
+  justify-content: center;
+  overflow: hidden;
+  width: 78px;
+}
+
+.thumbWrap img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.courseBody h2 {
+  color: #0c1e3b;
+  font-size: clamp(13px, 1.7vw, 19px);
+  line-height: 1.12;
+  margin: 0 0 6px;
+}
+
+.courseBody p {
+  color: rgba(36, 36, 36, 0.8);
+  font-size: clamp(10px, 1.2vw, 14px);
+  line-height: 1.28;
+  margin: 0;
+}
+
+.scope,
+.duration {
+  color: rgba(36, 36, 36, 0.8) !important;
+  font-weight: 800;
+  margin-bottom: 4px !important;
+  text-transform: uppercase;
+}
+
+.duration {
+  text-transform: none;
+}
+
+.scheduleBox {
+  background: #0c1e3b;
+  border: 1px solid rgba(164, 164, 255, 0.26);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(12, 30, 59, 0.18);
+  font-family: 'Inter', Arial, sans-serif;
+  margin-top: 14px;
+  padding: 16px 20px;
+}
+
+.scheduleBox * {
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.scheduleBox h2 {
+  color: #a4a4ff;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: clamp(14px, 1.7vw, 20px);
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.scheduleBox p {
+  color: #ddeff2;
+  font-family: 'Inter', Arial, sans-serif;
+  font-weight: 400;
+  font-size: clamp(11px, 1.3vw, 15px);
+  line-height: 1.35;
+  margin: 0;
+}
+
+@media print {
+  .previewShell {
+    background: #ffffff;
+    padding: 0;
+  }
+
+  .toolbar {
+    display: none;
+  }
+
+  .document {
+    display: block;
+  }
+
+  .page {
+    box-shadow: none;
+    page-break-after: always;
+    width: 100vw;
+  }
+}

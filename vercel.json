@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/courses/sync",
+      "schedule": "0 0 1 * *"
+    }
+  ]
+}
