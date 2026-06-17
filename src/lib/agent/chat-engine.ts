@@ -178,6 +178,11 @@ function buildConversationFactsNote(messages: Message[]): string | null {
   const conversationText = getConversationText(messages);
   const closedSkills = extractClosedSkillsAnswer(messages);
   const noCodePreference = hasNoCodePreference(conversationText);
+  const mandatoryBasicsAnswered =
+    hasGoalAndTimeline(conversationText) &&
+    hasWeeklyStudyHours(conversationText) &&
+    Boolean(closedSkills || inferSpecificSkills(messages, conversationText)) &&
+    (!mentionsAutomation(conversationText) || noCodePreference || hasProgrammingPreference(conversationText));
 
   const facts: string[] = [];
   if (closedSkills) {
@@ -188,6 +193,11 @@ function buildConversationFactsNote(messages: Message[]): string | null {
   if (noCodePreference) {
     facts.push(
       'O aluno ja indicou preferencia por automacao sem programacao/no-code/low-code. Nao volte a perguntar se quer programacao.',
+    );
+  }
+  if (mandatoryBasicsAnswered) {
+    facts.push(
+      'As informacoes obrigatorias para montar a trilha ja estao respondidas. Nao faca novas perguntas de refinamento; avance para resumo do perfil, validacao de realismo e trilha completa.',
     );
   }
 
@@ -287,6 +297,33 @@ function selectBestConversationMessages(
   return savedMessages;
 }
 
+function ensureCurrentUserMessage(
+  conversationId: string,
+  messages: Message[],
+  content: string,
+): Message[] {
+  const normalizedContent = content.trim();
+  if (!normalizedContent) return messages;
+
+  const alreadyPresent = messages.some(
+    (message) =>
+      message.role === 'user' &&
+      message.content.trim() === normalizedContent,
+  );
+  if (alreadyPresent) return messages;
+
+  return [
+    ...messages,
+    {
+      id: `current_${Date.now()}`,
+      conversation_id: conversationId,
+      role: 'user',
+      content: normalizedContent,
+      created_at: new Date().toISOString(),
+    },
+  ];
+}
+
 /**
  * Process a user message and return a streaming response from GPT-4o.
  * Loads conversation history, courses, and builds context for the AI agent.
@@ -323,10 +360,14 @@ export async function processMessage(
 
   // 3. Load conversation history
   const savedMessages = await getConversationMessages(conversationId);
-  const messages = selectBestConversationMessages(
+  const messages = ensureCurrentUserMessage(
     conversationId,
-    savedMessages,
-    clientMessages
+    selectBestConversationMessages(
+      conversationId,
+      savedMessages,
+      clientMessages
+    ),
+    messageToSave,
   );
 
   if (shouldAskAutomationProgrammingPreference(messages, userMessage)) {
