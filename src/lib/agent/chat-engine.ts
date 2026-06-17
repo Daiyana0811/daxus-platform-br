@@ -84,9 +84,9 @@ function isRouteOrConfirmationMoment(text: string): boolean {
     'gerar',
     'trilha',
     'plano',
-    'correcto',
+    'correto',
     'si',
-    'ruta',
+    'trilha',
     'plan',
   ].some((term) => normalized.includes(normalizeForSearch(term)));
 }
@@ -105,9 +105,9 @@ function mentionsAutomation(text: string): boolean {
     'automacao',
     'automacoes',
     'otimizar processos',
-    'automatizacion',
-    'automatizaciones',
-    'optimizar procesos',
+    'automacao',
+    'automacoes',
+    'otimizar processos',
     'rpa',
     'agentes',
   ].some((term) => normalized.includes(normalizeForSearch(term)));
@@ -143,14 +143,14 @@ function isTechnicalCourseSupportQuestion(message: string): boolean {
     'resolva',
     'resolver',
     'me de o codigo',
-    'dame el codigo',
+    'me de o codigo',
     'codigo',
     'erro',
     'error',
     'bug',
     'formula',
     'funcao',
-    'funcion',
+    'funcao',
     'query',
     'consulta sql',
     'pandas',
@@ -163,19 +163,19 @@ function isTechnicalCourseSupportQuestion(message: string): boolean {
   const courseContentContext = [
     'curso',
     'aula',
-    'clase',
+    'aula',
     'exercicio',
-    'ejercicio',
+    'exercicio',
     'python',
     'excel',
     'power bi',
     'sql',
     'javascript',
     'automacao',
-    'automatizacion',
+    'automacao',
     'dashboard',
     'banco de dados',
-    'base de datos',
+    'base de dados',
   ].some((term) => text.includes(term));
 
   return asksForTechnicalHelp && courseContentContext;
@@ -370,22 +370,19 @@ export async function processMessage(
 
 const PLACEHOLDER_PATTERNS = [
   'objetivo profissional identificado',
-  'situación actual del aluno',
-  'situacao atual del aluno',
-  'habilidades, herramientas y conocimientos',
-  'nombre exacto del curso',
-  'nombre del master si aplica',
-  'duración real según notion',
-  'duracion real segun notion',
-  'por qué se recomienda este curso',
-  'por que se recomienda este curso',
-  'descripción del horario semanal',
-  'descripcion del horario semanal',
-  'notas adicionales o recomendaciones',
+  'situacao atual do aluno',
+  'habilidades, ferramentas e conhecimentos',
+  'nome exato do curso',
+  'nome do master se aplica',
+  'duracao real segundo notion',
+  'por que este curso e recomendado',
+  'descricao do horario semanal',
+  'notas adicionais ou recomendacoes',
   'no identificada',
   'no identificado',
-  'no identificadas',
-  'no identificados',
+  'nao identificada',
+  'nao identificado',
+  'sem duracao',
 ];
 
 function normalizeForSearch(value: string): string {
@@ -509,8 +506,8 @@ function supportCategoryForTitle(title: string): SupportCategory | null {
     'procesos selectivos',
     'preparacion',
     'empleabilidad',
-    'posicionamiento',
-    'carrera',
+    'posicionamento',
+    'carreira',
   ].some((term) => text.includes(term))
     ? 'career'
     : null;
@@ -589,7 +586,7 @@ function isProgrammingRelatedTitle(title: string): boolean {
     'python',
     'javascript',
     'programacao',
-    'automatizacion',
+    'automacao',
     'agentes',
     'web scraping',
     'macros',
@@ -645,49 +642,49 @@ const TECHNICAL_FALLBACK_RULES = [
   {
     triggers: [
       'analitica',
-      'analisis de datos',
-      'datos',
+      'analise de dados',
+      'dados',
       'data',
       'power bi',
       'dashboard',
       'indicadores',
-      'reportes',
+      'relatorios',
       'bi',
     ],
     titles: [
       'Fundamentos de Power BI',
-      'Diseño de Dashboards',
+      'Design de Dashboards',
       'Fundamentos de DAX',
-      'Dominando Power Query y el modelado de datos',
-      'Fundamentos SQL',
-      'Excel Intermedio',
+      'Dominando o Power Query e Modelagem de Dados',
+      'Fundamentos de SQL',
+      'Analise de Dados com Excel',
     ],
   },
   {
-    triggers: ['automatizacion', 'automatizar', 'optimizar procesos', 'ia', 'inteligencia artificial', 'agentes'],
+    triggers: ['automacao', 'automatizar', 'otimizar processos', 'ia', 'inteligencia artificial', 'agentes'],
     titles: [
-      'Primeros pasos en inteligencia artificial',
+      'Primeiros Passos na Inteligencia Artificial',
       'ChatGPT Descomplicado',
-      'Aplicaciones con Inteligencia Artificial',
-      'Prompts en la Práctica',
-      'Automatización de Agentes',
+      'Aplicacoes com Inteligencia Artificial',
+      'Prompts na Pratica',
+      'Automacoes e Agentes de IA',
     ],
   },
   {
-    triggers: ['excel', 'hojas de calculo', 'planillas'],
-    titles: ['Excel Básico', 'Excel Intermedio', 'Excel avanzado con Power Pivot', 'Dashboards Profesionales con Excel'],
+    triggers: ['excel', 'planilhas'],
+    titles: ['Fundamentos de Excel', 'Analise de Dados com Excel', 'Dashboards profissionais com Excel'],
   },
   {
-    triggers: ['sql', 'bases de datos', 'base de datos', 'consultas'],
-    titles: ['Lenguaje SQL - Nivel básico', 'Fundamentos SQL', 'SQL Avanzado', 'Administración de banco de datos'],
+    triggers: ['sql', 'bancos de dados', 'base de dados', 'consultas'],
+    titles: ['Nocoes da Linguagem SQL', 'Fundamentos de SQL', 'SQL Avancado', 'Administracao de Bancos de Dados'],
   },
   {
-    triggers: ['python', 'programacao', 'programar', 'codigo', 'desarrollo'],
+    triggers: ['python', 'programacao', 'programar', 'codigo', 'desenvolvimento'],
     titles: [
-      'Fundamentos de Python',
-      'Análisis de datos con Python',
-      'Automatización de Tareas con Python',
-      'Laboratorio de projetos con Python',
+      'Primeiros passos com Python',
+      'Analise de Dados com Python',
+      'Automacao de Tarefas com Python',
+      'Dominando a linguagem Python',
     ],
   },
 ];
@@ -696,19 +693,19 @@ function buildTechnicalCourseReason(course: Course, contextText: string): string
   const title = course.title;
   const context = normalizeForSearch(contextText);
 
-  if (context.includes('analitica') || context.includes('datos') || context.includes('power bi')) {
-    return `Recomendado porque ${title} fortalece una habilidad tecnica clave para analizar datos, construir evidencias y comunicar decisiones con claridad.`;
+  if (context.includes('analitica') || context.includes('dados') || context.includes('power bi')) {
+    return `Recomendado porque ${title} fortalece uma habilidade tecnica chave para analisar dados, construir evidencias e comunicar decisoes com clareza.`;
   }
 
-  if (context.includes('automatizacion') || context.includes('ia') || context.includes('inteligencia artificial')) {
-    return `Recomendado porque ${title} te ayuda a optimizar tareas y convertir herramientas digitales en mejoras practicas para tu trabalho.`;
+  if (context.includes('automacao') || context.includes('ia') || context.includes('inteligencia artificial')) {
+    return `Recomendado porque ${title} ajuda voce a otimizar tarefas e transformar ferramentas digitais em melhorias praticas para seu trabalho.`;
   }
 
   if (context.includes('programacao') || context.includes('python')) {
-    return `Recomendado porque ${title} construye una base practica para resolver problemas con logica, codigo y projetos aplicables.`;
+    return `Recomendado porque ${title} constroi uma base pratica para resolver problemas com logica, codigo e projetos aplicaveis.`;
   }
 
-  return `Recomendado porque ${title} aporta una habilidad tecnica concreta para avanzar hacia seu objetivo profissional.`;
+  return `Recomendado porque ${title} contribui com uma habilidade tecnica concreta para avancar rumo ao seu objetivo profissional.`;
 }
 
 function buildTechnicalStudyCourse(

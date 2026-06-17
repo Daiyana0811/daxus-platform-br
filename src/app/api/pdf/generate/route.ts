@@ -305,26 +305,27 @@ type SupportCategory = 'linkedin' | 'career' | 'soft' | 'leadership';
 function supportCategoryForTitle(title: string): SupportCategory | null {
   const text = normalizeText(title);
   if (text.includes('linkedin')) return 'linkedin';
-  if (text.includes('liderazgo') || text.includes('motivar') || text.includes('desarrollar personas')) {
+  if (text.includes('lideranca') || text.includes('lideranca') || text.includes('formacao de lideres')) {
     return 'leadership';
   }
   if (
-    text.includes('comunicacion') ||
-    text.includes('oratoria') ||
+    text.includes('comunicacao') ||
+    text.includes('comunicacao') ||
     text.includes('inteligencia emocional') ||
-    text.includes('habilidades blandas')
+    text.includes('habilidades comportamentais')
   ) {
     return 'soft';
   }
   return [
     'networking',
-    'productividad',
-    'gestion del tiempo',
-    'procesos selectivos',
-    'preparacion',
-    'empleabilidad',
-    'posicionamiento',
-    'carrera',
+    'produtividade',
+    'gestao do tempo',
+    'processos seletivos',
+    'preparacao',
+    'empregabilidade',
+    'posicionamento',
+    'carreira',
+    'carreira',
   ].some((term) => text.includes(term))
     ? 'career'
     : null;
@@ -339,27 +340,27 @@ function buildRecommendationReason(
   plan: StudyPlanData,
   fallback?: string | null,
 ): string {
-  const goal = shorten(plan.professionalGoal || 'tu objetivo profissional', 110);
+  const goal = shorten(plan.professionalGoal || 'seu objetivo profissional', 110);
   const description = firstSentence(course.description, 115);
   const title = cleanText(course.title);
 
   if (isCareerSupportTitle(title)) {
     if (normalizeText(title).includes('linkedin')) {
-      return `Se recomienda porque fortalece tu posicionamiento profesional y aumenta tu visibilidad ante reclutadores relacionados con ${goal}.`;
+      return `Recomendado porque fortalece seu posicionamento profissional e aumenta sua visibilidade diante de recrutadores relacionados a ${goal}.`;
     }
-    return `Se recomienda porque complementa la parte tecnica con habilidades profesionales necesarias para aplicar mejor lo aprendido en ${goal}.`;
+    return `Recomendado porque complementa a parte tecnica com habilidades profissionais necessarias para aplicar melhor o aprendizado em ${goal}.`;
   }
 
   if (description) {
-    return `Se recomienda porque ${title} trabaja ${description.toLowerCase()} y aporta una pieza concreta para avanzar hacia ${goal}.`;
+    return `Recomendado porque ${title} trabalha ${description.toLowerCase()} e contribui com uma habilidade concreta para avancar rumo a ${goal}.`;
   }
 
   const fallbackText = firstSentence(fallback, 120);
   if (fallbackText && !/recomendado para la trilha personalizada/i.test(fallbackText)) {
-    return `Se recomienda aqui porque ${fallbackText.toLowerCase()} y conecta directamente con ${goal}.`;
+    return `Recomendado aqui porque ${fallbackText.toLowerCase()} e se conecta diretamente com ${goal}.`;
   }
 
-  return `Se recomienda porque desarrolla una habilidad clave de ${title} que necesitas para acercarte a ${goal}.`;
+  return `Recomendado porque desenvolve uma habilidade-chave de ${title} que voce precisa para se aproximar de ${goal}.`;
 }
 
 function buildCareerSupportCourse(
@@ -372,7 +373,7 @@ function buildCareerSupportCourse(
   return {
     order,
     title: course.title,
-    description: course.description || 'Formacion de carrera para fortalecer tu perfil profesional.',
+    description: course.description || 'Formacao de carreira para fortalecer seu perfil profissional.',
     duration,
     thumbnailUrl: resolveThumbnailUrl(null, course.thumbnail_url),
     masterName: null,
@@ -390,12 +391,12 @@ function findPreferredSupportCourse(
   const preferred: Record<SupportCategory, string[]> = {
     linkedin: ['linkedin magnetico'],
     career: [
-      'networking con proposito como hablar y conectar en espacios sociales',
-      'productividad y gestion del tiempo',
-      'curso de oratoria',
+      'gestao do tempo e produtividade',
+      'estrategias de carreira',
+      'preparacao para processos seletivos',
     ],
-    soft: ['comunicacion asertiva', 'inteligencia emocional', 'curso de oratoria'],
-    leadership: ['liderazgo personal', 'motivar y desarrollar personas'],
+    soft: ['comunicacao de um profissional diferenciado', 'inteligencia emocional'],
+    leadership: ['gestao e lideranca', 'formacao de lideres', 'comunicacao assertiva no trabalho'],
   };
 
   const candidates = catalogCourses.filter((course) =>
@@ -416,49 +417,49 @@ const TECHNICAL_FALLBACK_RULES = [
   {
     triggers: [
       'analitica',
-      'analisis de datos',
-      'datos',
+      'analise de dados',
+      'dados',
       'data',
       'power bi',
       'dashboard',
       'indicadores',
-      'reportes',
+      'relatorios',
       'bi',
     ],
     titles: [
       'Fundamentos de Power BI',
-      'Diseño de Dashboards',
+      'Design de Dashboards',
       'Fundamentos de DAX',
-      'Dominando Power Query y el modelado de datos',
-      'Fundamentos SQL',
-      'Excel Intermedio',
+      'Dominando o Power Query e Modelagem de Dados',
+      'Fundamentos de SQL',
+      'Analise de Dados com Excel',
     ],
   },
   {
-    triggers: ['automatizacion', 'automatizar', 'optimizar procesos', 'ia', 'inteligencia artificial', 'agentes'],
+    triggers: ['automacao', 'automatizar', 'otimizar processos', 'ia', 'inteligencia artificial', 'agentes'],
     titles: [
-      'Primeros pasos en inteligencia artificial',
+      'Primeiros Passos na Inteligencia Artificial',
       'ChatGPT Descomplicado',
-      'Aplicaciones con Inteligencia Artificial',
-      'Prompts en la Práctica',
-      'Automatización de Agentes',
+      'Aplicacoes com Inteligencia Artificial',
+      'Prompts na Pratica',
+      'Automacoes e Agentes de IA',
     ],
   },
   {
-    triggers: ['excel', 'hojas de calculo', 'planillas'],
-    titles: ['Excel Básico', 'Excel Intermedio', 'Excel avanzado con Power Pivot', 'Dashboards Profesionales con Excel'],
+    triggers: ['excel', 'planilhas'],
+    titles: ['Fundamentos de Excel', 'Analise de Dados com Excel', 'Dashboards profissionais com Excel'],
   },
   {
-    triggers: ['sql', 'bases de datos', 'base de datos', 'consultas'],
-    titles: ['Lenguaje SQL - Nivel básico', 'Fundamentos SQL', 'SQL Avanzado', 'Administración de banco de datos'],
+    triggers: ['sql', 'bancos de dados', 'base de dados', 'consultas'],
+    titles: ['Nocoes da Linguagem SQL', 'Fundamentos de SQL', 'SQL Avancado', 'Administracao de Bancos de Dados'],
   },
   {
-    triggers: ['python', 'programacion', 'programar', 'codigo', 'desarrollo'],
+    triggers: ['python', 'programacao', 'programar', 'codigo', 'desenvolvimento'],
     titles: [
-      'Fundamentos de Python',
-      'Análisis de datos con Python',
-      'Automatización de Tareas con Python',
-      'Laboratorio de proyectos con Python',
+      'Primeiros passos com Python',
+      'Analise de Dados com Python',
+      'Automacao de Tarefas com Python',
+      'Dominando a linguagem Python',
     ],
   },
 ];
@@ -527,58 +528,58 @@ const NEXT_ROUTE_RULES = [
   {
     triggers: [
       'analitica',
-      'analisis de datos',
-      'datos',
+      'analise de dados',
+      'dados',
       'power bi',
       'dashboard',
       'indicadores',
-      'reportes',
+      'relatorios',
     ],
     titles: [
-      'Análisis de datos con Python',
-      'Laboratorio de proyectos con Python',
-      'Business Cases - Excel',
+      'Analise de Dados com Python',
+      'Dominando a linguagem Python',
+      'Business Cases Excel',
       'Figma para Dashboards',
-      'Power Point en la Práctica',
-      'Automatización de Tareas con Python',
+      'Power Point na Pratica',
+      'Automacao de Tarefas com Python',
     ],
   },
   {
-    triggers: ['automatizacion', 'automatizar', 'optimizar procesos', 'ia', 'inteligencia artificial', 'agentes'],
+    triggers: ['automacao', 'automatizar', 'otimizar processos', 'ia', 'inteligencia artificial', 'agentes'],
     titles: [
-      'Automatización de Agentes',
-      'Automatización de Tareas con Python',
-      'Agentes de IA - Nivel avanzado',
-      'Prompts en la Práctica',
+      'Automacoes e Agentes de IA',
+      'Automacao de Tarefas com Python',
+      'Agentes de IA - Nivel Avancado',
+      'Prompts na Pratica',
       'Dominando Power Apps',
-      'Sharepoint en la practica',
+      'Sharepoint na Pratica',
     ],
   },
   {
-    triggers: ['excel', 'hojas de calculo', 'planillas'],
+    triggers: ['excel', 'planilhas'],
     titles: [
-      'Dashboards Profesionales con Excel',
-      'Excel avanzado con Power Pivot',
-      'Business Cases - Excel',
-      'Biblioteca de Macros para copiar y pegar',
+      'Dashboards profissionais com Excel',
+      'Analise de Dados com Excel',
+      'Business Cases Excel',
+      'Dominando Macros e VBA',
     ],
   },
   {
-    triggers: ['sql', 'bases de datos', 'base de datos', 'consultas'],
-    titles: ['SQL Avanzado', 'Administración de banco de datos', 'Business Cases Python'],
+    triggers: ['sql', 'bancos de dados', 'base de dados', 'consultas'],
+    titles: ['SQL Avancado', 'Administracao de Bancos de Dados'],
   },
   {
-    triggers: ['python', 'programacion', 'programar', 'codigo', 'desarrollo'],
+    triggers: ['python', 'programacao', 'programar', 'codigo', 'desenvolvimento'],
     titles: [
-      'Laboratorio de proyectos con Python',
-      'Business Cases Python',
-      'Desarrollo Web con Python y Flask',
-      'Recursos avanzados del lenguaje Python',
+      'Dominando a linguagem Python',
+      'Desenvolvimento Web com Python & Flask',
+      'Recursos avancados da Linguagem Python',
+      'Analise de Dados com Python',
     ],
   },
   {
-    triggers: ['liderar', 'liderazgo', 'equipo', 'equipos', 'gerencia', 'direccion'],
-    titles: ['Motivar y Desarrollar Personas', 'Comunicación Asertiva', 'Curso de Oratoria'],
+    triggers: ['liderar', 'lideranca', 'equipe', 'equipes', 'gestao', 'direcao'],
+    titles: ['Gestao e Lideranca', 'Comunicacao Assertiva no Trabalho', 'Formacao de Lideres'],
   },
 ];
 
@@ -604,20 +605,20 @@ function nextRouteContext(plan: StudyPlanData): string {
 }
 
 function buildNextRouteReason(course: Course, plan: StudyPlanData): string {
-  const goal = shorten(plan.professionalGoal || 'tu objetivo profissional', 84);
+  const goal = shorten(plan.professionalGoal || 'seu objetivo profissional', 84);
   const title = cleanText(course.title);
   const context = nextRouteContext(plan);
 
-  if (context.includes('analitica') || context.includes('datos') || context.includes('power bi')) {
+  if (context.includes('analitica') || context.includes('dados') || context.includes('power bi')) {
     return `Para aprofundar sua trilha de dados e transformar o aprendizado em projetos aplicaveis a ${goal}.`;
   }
 
-  if (context.includes('automatizacion') || context.includes('ia') || context.includes('inteligencia artificial')) {
-    return `Para avanzar despues hacia soluciones practicas de automatizacion y productividad con mayor autonomia.`;
+  if (context.includes('automacao') || context.includes('ia') || context.includes('inteligencia artificial')) {
+    return `Para avancar depois para solucoes praticas de automacao e produtividade com mais autonomia.`;
   }
 
-  if (context.includes('lider') || context.includes('equipo')) {
-    return `Para fortalecer el siguiente nivel de influencia, comunicacion y aplicacion estrategica de tu aprendizaje.`;
+  if (context.includes('lider') || context.includes('equipe')) {
+    return `Para fortalecer o proximo nivel de influencia, comunicacao e aplicacao estrategica do seu aprendizado.`;
   }
 
   return `Para iniciar uma nova etapa depois desta trilha e continuar ampliando seu perfil com ${title}.`;
@@ -653,7 +654,7 @@ function buildNextRouteSuggestions(
 
   if (selected.size < 3) {
     const relevantTerms = [
-      'datos',
+      'dados',
       'analitica',
       'power bi',
       'excel',
@@ -661,12 +662,12 @@ function buildNextRouteSuggestions(
       'python',
       'ia',
       'inteligencia artificial',
-      'automatizacion',
+      'automacao',
       'dashboard',
-      'liderazgo',
-      'comunicacion',
-      'productividad',
-      'proyectos',
+      'lideranca',
+      'comunicacao',
+      'produtividade',
+      'projetos',
     ].filter((term) => context.includes(normalizeText(term)));
 
     catalogCourses
@@ -688,11 +689,11 @@ function buildNextRouteSuggestions(
 
   if (selected.size < 3) {
     [
-      'Productividad y Gestión del Tiempo',
-      'Comunicación Asertiva',
-      'Curso de Oratoria',
-      'Laboratorio de proyectos con Python',
-      'Aplicaciones con Inteligencia Artificial',
+      'Gestao do tempo e Produtividade',
+      'Comunicacao Assertiva no Trabalho',
+      'Comunicacao de um Profissional Diferenciado',
+      'Dominando a linguagem Python',
+      'Aplicacoes com Inteligencia Artificial',
     ].forEach((title) => addCourse(findExactCatalogCourse(title, catalogCourses)));
   }
 
@@ -700,7 +701,7 @@ function buildNextRouteSuggestions(
     .slice(0, 3)
     .map((course) => ({
       title: course.title,
-      duration: course.duration || 'Duracion por confirmar',
+      duration: course.duration || 'Duracao por confirmar',
       reason: buildNextRouteReason(course, plan),
       thumbnailUrl: resolveThumbnailUrl(null, course.thumbnail_url),
     }));
@@ -1460,15 +1461,15 @@ function drawImportantKeysPage(doc: PdfDoc) {
 
   const keys = [
     [
-      'Empieza antes de sentirte listo',
+      'Comece antes de se sentir pronto',
       'Nao espere dominar 100% para aplicar a oportunidades ou criar projetos. A preparacao melhora com pratica real.',
     ],
     [
-      'Frecuencia por encima de intensidad',
+      'Frequencia acima da intensidade',
       'Um bloco diario ou semanal sustentado gera mais progresso do que sessoes longas sem continuidade.',
     ],
     [
-      'Aprender importa mas que avanzar',
+      'Aprender importa mais do que avancar',
       'Nao marque cursos como concluidos sem compreender. Pare, pratique e volte ao conteudo quando precisar.',
     ],
     [

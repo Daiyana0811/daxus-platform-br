@@ -439,20 +439,20 @@ function buildPlanBlocks(
   const blocks: any[] = [
     headingBlock('Perfil identificado'),
     paragraphBlock(`Conversation ID: ${conversationId}`),
-    paragraphBlock(`Email/sesion: ${email}`),
+    paragraphBlock(`Email/sessao: ${email}`),
     paragraphBlock(`Nome: ${plan.studentName || 'Aluno'}`),
     paragraphBlock(`Situacao atual: ${plan.currentSituation || 'Nao identificada'}`),
     paragraphBlock(`Objetivo profissional: ${plan.professionalGoal || 'Nao identificado'}`),
-    paragraphBlock(`Habilidades especificas: ${plan.specificSkills || 'No identificadas'}`),
-    paragraphBlock(`Disponibilidad: ${plan.weeklyHours || 0} horas por semana`),
-    paragraphBlock(`Timeline objetivo: ${plan.targetTimeline || 'No identificado'}`),
+    paragraphBlock(`Habilidades especificas: ${plan.specificSkills || 'Nao identificadas'}`),
+    paragraphBlock(`Disponibilidade: ${plan.weeklyHours || 0} horas por semana`),
+    paragraphBlock(`Prazo objetivo: ${plan.targetTimeline || 'Nao identificado'}`),
     headingBlock('Trilha recomendada'),
   ];
 
   for (const course of plan.courses || []) {
     blocks.push(
       bulletBlock(
-        `${course.order}. ${course.title} (${course.duration || 'sin duracion'}) - ${
+        `${course.order}. ${course.title} (${course.duration || 'sem duracao'}) - ${
           course.reason || 'Recomendado para esta trilha personalizada.'
         }`
       )
@@ -460,9 +460,9 @@ function buildPlanBlocks(
   }
 
   blocks.push(
-    headingBlock('Horario y notas'),
-    paragraphBlock(plan.weeklySchedule || 'Sin horario sugerido.'),
-    paragraphBlock(plan.additionalNotes || 'Sin notas adicionales.')
+    headingBlock('Horario e notas'),
+    paragraphBlock(plan.weeklySchedule || 'Sem horario sugerido.'),
+    paragraphBlock(plan.additionalNotes || 'Sem notas adicionais.')
   );
 
   return blocks;
