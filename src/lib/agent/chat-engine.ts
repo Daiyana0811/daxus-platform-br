@@ -127,10 +127,78 @@ function hasProgrammingPreference(text: string): boolean {
   );
 }
 
+function hasNoCodePreference(text: string): boolean {
+  const normalized = normalizeForSearch(text);
+  return (
+    normalized.includes('sem programacao') ||
+    normalized.includes('sin programacion') ||
+    normalized.includes('no code') ||
+    normalized.includes('nocode') ||
+    normalized.includes('low code') ||
+    normalized.includes('lowcode') ||
+    normalized.includes('sem codigo') ||
+    normalized.includes('sin codigo')
+  );
+}
+
+function extractClosedSkillsAnswer(messages: Message[]): string {
+  const userMessages = messages
+    .filter((message) => message.role === 'user')
+    .map((message) => message.content)
+    .reverse();
+
+  for (const content of userMessages) {
+    const normalized = normalizeForSearch(content);
+    const mentionsExcelBasic =
+      normalized.includes('excel basico') ||
+      normalized.includes('excel básico') ||
+      normalized.includes('excel basic') ||
+      normalized.includes('excel iniciante') ||
+      normalized.includes('excel inicial');
+    const deniesMoreKnowledge =
+      normalized.includes('no tengo mas') ||
+      normalized.includes('nao tenho mais') ||
+      normalized.includes('nao tenho outros') ||
+      normalized.includes('no tengo otros') ||
+      normalized.includes('nao conheco mais') ||
+      normalized.includes('no conozco mas') ||
+      normalized.includes('solo excel') ||
+      normalized.includes('so excel') ||
+      normalized.includes('apenas excel') ||
+      normalized.includes('somente excel');
+
+    if (mentionsExcelBasic && deniesMoreKnowledge) return 'Excel basico';
+    if (mentionsExcelBasic && content.length < 90) return 'Excel basico';
+  }
+
+  return '';
+}
+
+function buildConversationFactsNote(messages: Message[]): string | null {
+  const conversationText = getConversationText(messages);
+  const closedSkills = extractClosedSkillsAnswer(messages);
+  const noCodePreference = hasNoCodePreference(conversationText);
+
+  const facts: string[] = [];
+  if (closedSkills) {
+    facts.push(
+      `O aluno ja respondeu habilidades/conhecimentos especificos: ${closedSkills}. Considere isso suficiente; nao pergunte novamente sobre outras ferramentas como IA, automacao no-code, SQL, Power BI ou programacao.`,
+    );
+  }
+  if (noCodePreference) {
+    facts.push(
+      'O aluno ja indicou preferencia por automacao sem programacao/no-code/low-code. Nao volte a perguntar se quer programacao.',
+    );
+  }
+
+  return facts.length ? facts.join('\n') : null;
+}
+
 function shouldAskAutomationProgrammingPreference(messages: Message[], userMessage: string): boolean {
   const conversationText = getConversationText(messages);
   if (!mentionsAutomation(userMessage) && !mentionsAutomation(conversationText)) return false;
   if (hasProgrammingPreference(conversationText)) return false;
+  if (hasNoCodePreference(conversationText)) return false;
   return true;
 }
 
@@ -288,11 +356,18 @@ export async function processMessage(
     name: userName,
     email: userEmail,
   });
+  const conversationFactsNote = buildConversationFactsNote(messages);
 
   // 7. Build message array for OpenAI
   const openaiMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
     { role: 'system', content: systemPrompt },
   ];
+  if (conversationFactsNote) {
+    openaiMessages.push({
+      role: 'system',
+      content: `FATOS JA RESPONDIDOS NESTA CONVERSA:\n${conversationFactsNote}`,
+    });
+  }
 
   // Add conversation history
   for (let i = 0; i < messages.length; i++) {
