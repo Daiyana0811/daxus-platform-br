@@ -251,6 +251,8 @@ Cada item de courses deve ter:
 - estimatedWeeks: semanas estimadas segundo duracao real e horas semanais.
 
 Nao copie textos desta instrucao como valores. Nao use placeholders como "objetivo profissional identificado" ou "nome exato do curso".
+Nao misture os campos do perfil: professionalGoal deve conter apenas o objetivo; currentSituation deve conter estudos, cargo, experiencia e contexto atual; specificSkills deve conter somente ferramentas, habilidades ou conhecimentos concretos como Excel, Power BI, SQL, Python, IA, comunicacao ou lideranca.
+Se o aluno nao informou habilidades ou ferramentas concretas, use "Nao identificadas" em specificSkills. Nunca copie currentSituation para specificSkills.
 Nao repita o mesmo reason em varios cursos.
 Omita qualquer curso, categoria ou bloco que nao tenha titulo exato no catalogo.
 Nao use titulos genericos como "Habilidades Blandas y Carrera" ou "Habilidades Comportamentais com Especialistas".

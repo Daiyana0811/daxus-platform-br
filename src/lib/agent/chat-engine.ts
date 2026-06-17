@@ -1110,6 +1110,16 @@ function fillMissingPlanText(primary: string, fallback: string): string {
   return fallback || primary || '';
 }
 
+function choosePlanText(primary: string, fallback: string, invalid?: (value: string) => boolean): string {
+  const cleanedPrimary = cleanExtractedFact(primary || '');
+  if (cleanedPrimary && !isPlaceholderValue(cleanedPrimary) && !invalid?.(cleanedPrimary)) {
+    return cleanedPrimary;
+  }
+
+  const cleanedFallback = cleanExtractedFact(fallback || '');
+  return cleanedFallback || cleanedPrimary || '';
+}
+
 function cleanExtractedFact(value: string): string {
   return value
     .replace(/\*\*/g, '')
@@ -1175,6 +1185,113 @@ function userAnswerAfterQuestion(
   }
 
   return '';
+}
+
+function inferProfessionalGoal(messages: Message[], conversationText: string): string {
+  const labeled = extractLabeledFact(conversationText, [
+    'Objetivo profissional',
+    'Objetivo',
+    'Meta profissional',
+    'Objetivo de carreira',
+    'O que quer alcancar',
+  ]);
+  if (labeled) return labeled;
+
+  const directAnswer = userAnswerAfterQuestion(messages, (assistantText) => {
+    const text = normalizeForSearch(assistantText);
+    return (
+      text.includes('objetivo profissional') ||
+      text.includes('qual objetivo') ||
+      text.includes('que objetivo') ||
+      text.includes('o que voce quer alcancar') ||
+      text.includes('em quanto tempo quer alcancar') ||
+      text.includes('prazo')
+    );
+  });
+  if (directAnswer) return directAnswer;
+
+  return messages
+    .filter((message) => message.role === 'user')
+    .map((message) => cleanExtractedFact(message.content))
+    .reverse()
+    .find((content) => {
+      if (!isUsefulExtractedFact(content) || isMostlyTimelineOrAvailability(content)) return false;
+      const text = normalizeForSearch(content);
+      return [
+        'quero',
+        'quiero',
+        'objetivo',
+        'meta',
+        'lider',
+        'crescer',
+        'promocao',
+        'migrar',
+        'aprender',
+        'trabalhar com',
+        'ser ',
+        'tornar',
+      ].some((term) => text.includes(normalizeForSearch(term)));
+    }) || '';
+}
+
+function isLikelyCurrentSituation(value: string): boolean {
+  const text = normalizeForSearch(value);
+  return [
+    'estudei',
+    'estudie',
+    'estudo',
+    'estudios',
+    'formacao',
+    'formacion',
+    'graduacao',
+    'governo',
+    'gobierno',
+    'relacoes internacionais',
+    'relaciones internacionales',
+    'coordenador',
+    'coordinadora',
+    'coordenadora',
+    'trabalho',
+    'trabajo',
+    'empresa',
+    'teatro',
+    'projetos',
+    'alianzas',
+    'aliancas',
+    'experiencia',
+    'profissional',
+    'profesional',
+  ].some((term) => text.includes(normalizeForSearch(term)));
+}
+
+function isLikelySpecificSkills(value: string): boolean {
+  const text = normalizeForSearch(value);
+  return [
+    'excel',
+    'power bi',
+    'sql',
+    'python',
+    'dax',
+    'power query',
+    'programacao',
+    'programacion',
+    'inteligencia artificial',
+    'ia',
+    'n8n',
+    'automacao',
+    'automatizacion',
+    'dashboard',
+    'dados',
+    'datos',
+    'analise',
+    'analisis',
+    'comunicacao',
+    'comunicacion',
+    'lideranca',
+    'liderazgo',
+    'negociacao',
+    'negociacion',
+  ].some((term) => text.includes(normalizeForSearch(term)));
 }
 
 function inferCurrentSituation(messages: Message[], conversationText: string): string {
@@ -1274,20 +1391,29 @@ function enrichPlanProfileFromConversation(
   userName: string | null,
 ): StudyPlanData {
   const conversationText = getConversationText(messages);
-  const currentSituation = fillMissingPlanText(
+  const inferredGoal = inferProfessionalGoal(messages, conversationText);
+  const inferredCurrentSituation = inferCurrentSituation(messages, conversationText);
+  const inferredSpecificSkills = inferSpecificSkills(messages, conversationText);
+
+  const currentSituation = choosePlanText(
     plan.currentSituation,
-    inferCurrentSituation(messages, conversationText),
+    inferredCurrentSituation,
+    (value) => normalizeForSearch(value) === normalizeForSearch(plan.specificSkills || '') && isLikelySpecificSkills(value),
   );
-  const specificSkills = fillMissingPlanText(
+  const specificSkills = choosePlanText(
     plan.specificSkills,
-    inferSpecificSkills(messages, conversationText),
+    inferredSpecificSkills,
+    (value) =>
+      normalizeForSearch(value) === normalizeForSearch(currentSituation || '') ||
+      (isLikelyCurrentSituation(value) && !isLikelySpecificSkills(value)),
   );
 
   return {
     ...plan,
     studentName: fillMissingPlanText(plan.studentName, userName || ''),
+    professionalGoal: choosePlanText(plan.professionalGoal, inferredGoal),
     currentSituation,
-    specificSkills,
+    specificSkills: specificSkills || 'Nao identificadas',
   };
 }
 

@@ -1557,6 +1557,17 @@ function drawRoutePage(doc: PdfDoc, plan: StudyPlanData, courseImages: Map<numbe
 function drawProfileSummary(doc: PdfDoc, plan: StudyPlanData, y: number): number {
   const x = 48;
   const width = doc.page.width - 96;
+  const currentSituation = cleanText(plan.currentSituation);
+  const professionalGoal = cleanText(plan.professionalGoal);
+  const rawSkills = cleanText(plan.specificSkills);
+  const normalizedCurrent = normalizeText(currentSituation);
+  const normalizedSkills = normalizeText(rawSkills);
+  const skillsLookLikeExperience =
+    normalizedSkills &&
+    normalizedSkills === normalizedCurrent;
+  const specificSkills =
+    rawSkills && !skillsLookLikeExperience ? rawSkills : 'Nao identificadas';
+
   doc.roundedRect(x, y, width, 116, 8).fill(COLORS.blue);
   doc
     .save()
@@ -1571,9 +1582,9 @@ function drawProfileSummary(doc: PdfDoc, plan: StudyPlanData, y: number): number
     .text('PERFIL IDENTIFICADO', x + 18, y + 16, { characterSpacing: 0.8 });
 
   const items = [
-    ['Objetivo', plan.professionalGoal],
-    ['Situacao atual', plan.currentSituation],
-    ['Habilidades', plan.specificSkills || 'Nao identificadas'],
+    ['Objetivo', professionalGoal || 'Nao identificado'],
+    ['Situacao atual', currentSituation || 'Nao identificada'],
+    ['Habilidades', specificSkills],
     ['Disponibilidade', `${plan.weeklyHours || 0} horas/semana - ${plan.targetTimeline || 'sem prazo'}`],
   ];
 
