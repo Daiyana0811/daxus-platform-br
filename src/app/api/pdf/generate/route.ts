@@ -335,6 +335,73 @@ function isCareerSupportTitle(title: string): boolean {
   return Boolean(supportCategoryForTitle(title));
 }
 
+function isMasterOrMasterLevelCourse(course?: Course | null): boolean {
+  if (!course) return false;
+  return Boolean(/^master\s+/i.test(course.title) || course.master_name || course.master_level);
+}
+
+function hasExplicitCourseRequest(contextText: string, title: string): boolean {
+  const context = normalizeText(contextText);
+  const normalizedTitle = normalizeText(title);
+  if (!context || !normalizedTitle) return false;
+  if (context.includes(normalizedTitle)) return true;
+
+  const terms = normalizedTitle
+    .split(/\s+/)
+    .filter((term) => term.length > 3 && !['nivel', 'curso', 'master', 'fundamentos'].includes(term));
+  if (!terms.length) return false;
+  return terms.every((term) => context.includes(term));
+}
+
+function isAllowedTechnicalCourse(course: Course | undefined, contextText: string): boolean {
+  if (!course) return false;
+  if (isCareerSupportTitle(course.title)) return true;
+  if (isMasterOrMasterLevelCourse(course)) return true;
+  return hasExplicitCourseRequest(contextText, course.title);
+}
+
+function isSupportCourseRelevant(course: Course, category: SupportCategory, contextText: string): boolean {
+  if (category === 'linkedin' || category === 'career') return true;
+
+  const context = normalizeText(contextText);
+  const courseText = normalizeText(`${course.title} ${course.description || ''}`);
+  const sharedTerms = courseText
+    .split(/\s+/)
+    .filter((term) => term.length > 5)
+    .some((term) => context.includes(term));
+
+  if (sharedTerms) return true;
+
+  if (category === 'leadership') {
+    return [
+      'lider',
+      'lideranca',
+      'liderazgo',
+      'equipe',
+      'equipo',
+      'gestao',
+      'gerencia',
+      'coordenar',
+      'direcao',
+      'estrategia',
+    ].some((term) => context.includes(term));
+  }
+
+  return [
+    'comunicacao',
+    'comunicacion',
+    'apresentar',
+    'presentacion',
+    'stakeholder',
+    'cliente',
+    'equipe',
+    'equipo',
+    'lider',
+    'negociacao',
+    'oratoria',
+  ].some((term) => context.includes(term));
+}
+
 function buildRecommendationReason(
   course: Pick<Course, 'title' | 'description' | 'master_name' | 'master_level'>,
   plan: StudyPlanData,
@@ -387,6 +454,7 @@ function findPreferredSupportCourse(
   catalogCourses: Course[],
   category: SupportCategory,
   usedTitles: Set<string>,
+  contextText = '',
 ): Course | undefined {
   const preferred: Record<SupportCategory, string[]> = {
     linkedin: ['linkedin magnetico'],
@@ -402,7 +470,8 @@ function findPreferredSupportCourse(
   const candidates = catalogCourses.filter((course) =>
     supportCategoryForTitle(course.title) === category &&
     !isExcludedRecommendationCourse(course.title) &&
-    !usedTitles.has(normalizeText(course.title))
+    !usedTitles.has(normalizeText(course.title)) &&
+    isSupportCourseRelevant(course, category, contextText)
   );
 
   for (const title of preferred[category]) {
@@ -497,7 +566,12 @@ function buildTechnicalFallbackCourses(
       plan,
     ))
     .filter((course): course is Course =>
-      Boolean(course && !usedTitles.has(normalizeText(course.title)) && !isCareerSupportTitle(course.title))
+      Boolean(
+        course &&
+          !usedTitles.has(normalizeText(course.title)) &&
+          !isCareerSupportTitle(course.title) &&
+          isAllowedTechnicalCourse(course, `${plan.professionalGoal} ${plan.specificSkills} ${plan.currentSituation} ${plan.additionalNotes}`)
+      )
     )
     .filter((course) => !isExcludedRecommendationCourse(course.title))
     .slice(0, 6)
@@ -551,7 +625,6 @@ const NEXT_ROUTE_RULES = [
       'Automacao de Tarefas com Python',
       'Agentes de IA - Nivel Avancado',
       'Prompts na Pratica',
-      'Dominando Power Apps',
       'Sharepoint na Pratica',
     ],
   },
@@ -638,6 +711,7 @@ function buildNextRouteSuggestions(
     if (/^master\s+/i.test(course.title)) return;
     if (isExcludedRecommendationCourse(course.title)) return;
     if (hasCourseInPlan(plan, course)) return;
+    if (!isAllowedTechnicalCourse(course, context)) return;
     selected.set(key, course);
   };
 
@@ -714,7 +788,12 @@ function placeCareerSupportAfterFirstTechnical(
   plan: StudyPlanData,
 ): StudyPlanData['courses'] {
   const usedTitles = new Set(courses.map((course) => normalizeText(course.title)));
-  let technicalCourses = courses.filter((course) => !isCareerSupportTitle(course.title));
+  const contextText = `${plan.professionalGoal} ${plan.specificSkills} ${plan.currentSituation} ${plan.additionalNotes}`;
+  let technicalCourses = courses.filter((course) => {
+    if (isCareerSupportTitle(course.title)) return false;
+    const catalogCourse = findExactCatalogCourse(course.title, catalogCourses);
+    return !catalogCourse || isAllowedTechnicalCourse(catalogCourse, contextText);
+  });
   if (!technicalCourses.length) {
     technicalCourses = buildTechnicalFallbackCourses(plan, catalogCourses, usedTitles);
     technicalCourses.forEach((course) => usedTitles.add(normalizeText(course.title)));
@@ -725,7 +804,7 @@ function placeCareerSupportAfterFirstTechnical(
     const existing = courses.find((course) => supportCategoryForTitle(course.title) === category);
     if (existing) return [existing];
 
-    const catalogCourse = findPreferredSupportCourse(catalogCourses, category, usedTitles);
+    const catalogCourse = findPreferredSupportCourse(catalogCourses, category, usedTitles, contextText);
     if (!catalogCourse) return [];
 
     usedTitles.add(normalizeText(catalogCourse.title));
@@ -1557,16 +1636,37 @@ function drawRoutePage(doc: PdfDoc, plan: StudyPlanData, courseImages: Map<numbe
 function drawProfileSummary(doc: PdfDoc, plan: StudyPlanData, y: number): number {
   const x = 48;
   const width = doc.page.width - 96;
+  const badProfileText = (value: string) => {
+    const text = normalizeText(value);
+    return [
+      'archivo adjunto',
+      'arquivo anexado',
+      'attached file',
+      'he cargado un documento',
+      'carreguei um documento',
+      'i uploaded a document',
+      'analiza la informacion del documento',
+      'analise as informacoes do documento',
+      'preguntame unicamente lo que falte',
+      'pergunte apenas o que faltar',
+    ].some((term) => text.includes(normalizeText(term)));
+  };
   const currentSituation = cleanText(plan.currentSituation);
   const professionalGoal = cleanText(plan.professionalGoal);
   const rawSkills = cleanText(plan.specificSkills);
   const normalizedCurrent = normalizeText(currentSituation);
   const normalizedSkills = normalizeText(rawSkills);
   const skillsLookLikeExperience =
-    normalizedSkills &&
-    normalizedSkills === normalizedCurrent;
+    Boolean(normalizedSkills) &&
+    (normalizedSkills === normalizedCurrent || normalizedCurrent.includes(normalizedSkills));
+  const safeGoal =
+    professionalGoal && !badProfileText(professionalGoal) ? professionalGoal : 'Nao identificado';
+  const safeCurrent =
+    currentSituation && !badProfileText(currentSituation) ? currentSituation : 'Nao identificada';
   const specificSkills =
-    rawSkills && !skillsLookLikeExperience ? rawSkills : 'Nao identificadas';
+    rawSkills && !skillsLookLikeExperience && !badProfileText(rawSkills)
+      ? rawSkills
+      : 'Nao identificadas';
 
   doc.roundedRect(x, y, width, 116, 8).fill(COLORS.blue);
   doc
@@ -1582,8 +1682,8 @@ function drawProfileSummary(doc: PdfDoc, plan: StudyPlanData, y: number): number
     .text('PERFIL IDENTIFICADO', x + 18, y + 16, { characterSpacing: 0.8 });
 
   const items = [
-    ['Objetivo', professionalGoal || 'Nao identificado'],
-    ['Situacao atual', currentSituation || 'Nao identificada'],
+    ['Objetivo', safeGoal],
+    ['Situacao atual', safeCurrent],
     ['Habilidades', specificSkills],
     ['Disponibilidade', `${plan.weeklyHours || 0} horas/semana - ${plan.targetTimeline || 'sem prazo'}`],
   ];

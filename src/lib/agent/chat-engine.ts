@@ -758,6 +758,78 @@ function isCareerSupportTitle(title: string): boolean {
   return Boolean(supportCategoryForTitle(title));
 }
 
+function isMasterOrMasterLevelCourse(course?: Course | null): boolean {
+  if (!course) return false;
+  return Boolean(/^master\s+/i.test(course.title) || course.master_name || course.master_level);
+}
+
+function hasExplicitCourseRequest(contextText: string, title: string): boolean {
+  const context = normalizeForSearch(contextText);
+  const normalizedTitle = normalizeForSearch(title);
+  if (!context || !normalizedTitle) return false;
+  if (context.includes(normalizedTitle)) return true;
+
+  const terms = normalizedTitle
+    .split(/\s+/)
+    .filter((term) => term.length > 3 && !['nivel', 'curso', 'master', 'fundamentos'].includes(term));
+  if (!terms.length) return false;
+  return terms.every((term) => context.includes(term));
+}
+
+function isAllowedTechnicalCourse(course: Course | undefined, contextText: string): boolean {
+  if (!course) return false;
+  if (isCareerSupportTitle(course.title)) return true;
+  if (isMasterOrMasterLevelCourse(course)) return true;
+  return hasExplicitCourseRequest(contextText, course.title);
+}
+
+function isSupportCourseRelevant(
+  course: Course,
+  category: SupportCategory,
+  contextText: string,
+): boolean {
+  if (category === 'linkedin' || category === 'career') return true;
+
+  const context = normalizeForSearch(contextText);
+  const courseText = normalizeForSearch(`${course.title} ${course.description || ''}`);
+  const sharedTerms = courseText
+    .split(/\s+/)
+    .filter((term) => term.length > 5)
+    .some((term) => context.includes(term));
+
+  if (sharedTerms) return true;
+
+  if (category === 'leadership') {
+    return [
+      'lider',
+      'lideranca',
+      'liderazgo',
+      'equipe',
+      'equipo',
+      'gerencia',
+      'gestao',
+      'coordinar',
+      'direcao',
+      'estrategia',
+    ].some((term) => context.includes(term));
+  }
+
+  return [
+    'comunicacao',
+    'comunicacion',
+    'apresentar',
+    'presentar',
+    'stakeholder',
+    'cliente',
+    'equipe',
+    'equipo',
+    'lider',
+    'lideranca',
+    'negociacao',
+    'oratoria',
+  ].some((term) => context.includes(term));
+}
+
 function buildCareerSupportCourse(
   course: Course,
   order: number,
@@ -792,6 +864,7 @@ function findPreferredSupportCourse(
   catalogCourses: Course[],
   category: SupportCategory,
   usedTitles: Set<string>,
+  contextText = '',
 ): Course | undefined {
   const preferred: Record<SupportCategory, string[]> = {
     linkedin: ['linkedin magnetico'],
@@ -809,6 +882,7 @@ function findPreferredSupportCourse(
     return (
       supportCategoryForTitle(course.title) === category &&
       !isExcludedRecommendationCourse(course.title) &&
+      isSupportCourseRelevant(course, category, contextText) &&
       !usedTitles.has(normalizedTitle)
     );
   });
@@ -1028,7 +1102,12 @@ function buildTechnicalFallbackCourses(
     .map((title) => findExactCatalogCourse(title, catalogCourses))
     .map((course) => course && resolveAiCoursePreference(course, catalogCourses, contextText))
     .filter((course): course is Course =>
-      Boolean(course && !usedTitles.has(normalizeForSearch(course.title)) && !isCareerSupportTitle(course.title))
+      Boolean(
+        course &&
+        !usedTitles.has(normalizeForSearch(course.title)) &&
+        !isCareerSupportTitle(course.title) &&
+        isAllowedTechnicalCourse(course, contextText)
+      )
     )
     .filter((course) => !isExcludedRecommendationCourse(course.title))
     .slice(0, 6)
@@ -1050,7 +1129,10 @@ function ensureCareerSupportCourse(
 
   const catalogBackedCourses = withProgrammingFoundation.filter((course) => {
     if (!course.title || isExcludedRecommendationCourse(course.title)) return false;
-    return Boolean(findCourseInCatalog(course.title, catalogCourses));
+    const catalogCourse = findCourseInCatalog(course.title, catalogCourses);
+    if (!catalogCourse) return false;
+    if (isCareerSupportTitle(course.title)) return true;
+    return isAllowedTechnicalCourse(catalogCourse, contextText);
   });
 
   const usedTitles = new Set(catalogBackedCourses.map((course) => normalizeForSearch(course.title)));
@@ -1068,7 +1150,7 @@ function ensureCareerSupportCourse(
     );
     if (existing) return [existing];
 
-    const catalogCourse = findPreferredSupportCourse(catalogCourses, category, usedTitles);
+    const catalogCourse = findPreferredSupportCourse(catalogCourses, category, usedTitles, contextText);
     if (!catalogCourse) return [];
     usedTitles.add(normalizeForSearch(catalogCourse.title));
     return [buildCareerSupportCourse(catalogCourse, 1, weeklyHours, category)];
@@ -1353,20 +1435,43 @@ function fillMissingPlanText(primary: string, fallback: string): string {
 
 function choosePlanText(primary: string, fallback: string, invalid?: (value: string) => boolean): string {
   const cleanedPrimary = cleanExtractedFact(primary || '');
-  if (cleanedPrimary && !isPlaceholderValue(cleanedPrimary) && !invalid?.(cleanedPrimary)) {
+  if (
+    cleanedPrimary &&
+    !isPlaceholderValue(cleanedPrimary) &&
+    !isAttachmentInstructionFact(cleanedPrimary) &&
+    !invalid?.(cleanedPrimary)
+  ) {
     return cleanedPrimary;
   }
 
   const cleanedFallback = cleanExtractedFact(fallback || '');
+  if (cleanedFallback && !isAttachmentInstructionFact(cleanedFallback)) return cleanedFallback;
   return cleanedFallback || cleanedPrimary || '';
 }
 
 function cleanExtractedFact(value: string): string {
   return value
     .replace(/\*\*/g, '')
+    .replace(/^\[(?:Archivo|Arquivo|Attached file)[^\]]+\]\s*/i, '')
     .replace(/^[-•*\s]+/, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function isAttachmentInstructionFact(value: string): boolean {
+  const text = normalizeForSearch(value);
+  return [
+    'archivo adjunto',
+    'arquivo anexado',
+    'attached file',
+    'he cargado un documento',
+    'carreguei um documento',
+    'i uploaded a document',
+    'analiza la informacion del documento',
+    'analise as informacoes do documento',
+    'preguntame unicamente lo que falte',
+    'pergunte apenas o que faltar',
+  ].some((term) => text.includes(normalizeForSearch(term)));
 }
 
 function isUsefulExtractedFact(value?: string | null): boolean {
@@ -1374,6 +1479,7 @@ function isUsefulExtractedFact(value?: string | null): boolean {
   const cleaned = cleanExtractedFact(value);
   if (cleaned.length < 3) return false;
   if (isPlaceholderValue(cleaned)) return false;
+  if (isAttachmentInstructionFact(cleaned)) return false;
   return !/^(si|sí|ok|okay|correcto|correcta|listo|continua|continúa|confirmo)$/i.test(cleaned);
 }
 
