@@ -6,7 +6,7 @@ import type { StudyPlanData } from '@/lib/supabase';
 
 const CS_SUPPORT_URL = 'https://sndflw.com/l/atendimento-cs';
 const INVALID_EMAIL_MESSAGE =
-  `Este e-mail nao aparece como valido para acessar. Por favor fale conosco no CS: ${CS_SUPPORT_URL}`;
+  `Este e-mail nao aparece como valido para acessar. Por favor fale conosco no CS.`;
 
 interface EmailGateProps {
   onValidated: (data: {
@@ -28,17 +28,15 @@ export default function EmailGate({ onValidated }: EmailGateProps) {
   const normalizedEmail = email.toLowerCase().trim();
 
   const renderErrorMessage = () => {
-    const [beforeUrl] = error.split(CS_SUPPORT_URL);
-    if (!error.includes(CS_SUPPORT_URL)) return error;
+    if (!error.includes('CS')) return error;
 
     return (
-      <>
-        {beforeUrl}
-        <a href={CS_SUPPORT_URL} target="_blank" rel="noreferrer">
-          fale conosco no CS
+      <span className="email-error-content">
+        <span>{error}</span>
+        <a className="email-error-link" href={CS_SUPPORT_URL} target="_blank" rel="noreferrer">
+          Abrir atendimento CS
         </a>
-        .
-      </>
+      </span>
     );
   };
 
