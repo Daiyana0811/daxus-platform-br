@@ -260,6 +260,26 @@ function isTechnicalCourseSupportQuestion(message: string): boolean {
   return asksForTechnicalHelp && courseContentContext;
 }
 
+function isHumanSupportRequest(message: string): boolean {
+  const text = normalizeForSearch(message);
+  return [
+    'falar com alguem',
+    'falar com uma pessoa',
+    'falar com atendente',
+    'falar com suporte',
+    'contatar suporte',
+    'entrar em contato',
+    'atendimento',
+    'servico ao cliente',
+    'pessoa real',
+    'atendente humano',
+    'suporte cs',
+    'cs',
+    'hablar con alguien',
+    'hablar con soporte',
+  ].some((term) => text.includes(normalizeForSearch(term)));
+}
+
 function isStudyPlanRelatedMessage(message: string): boolean {
   const text = normalizeForSearch(message);
   if (!text) return true;
@@ -470,9 +490,16 @@ export async function processMessage(
 
   await saveMessage(conversationId, 'user', messageToSave);
 
+  if (isHumanSupportRequest(userMessage)) {
+    const supportMessage =
+      'Claro. Voce pode falar com o atendimento CS da Daxus aqui: https://sndflw.com/l/atendimento-cs';
+    await saveMessage(conversationId, 'assistant', supportMessage);
+    return staticAssistantStream(supportMessage);
+  }
+
   if (isTechnicalCourseSupportQuestion(userMessage)) {
     const redirectMessage =
-      'Essa duvida tecnica do conteudo do curso deve ser revisada na comunidade Circle ou no espaco academico do curso, onde podem ajudar com codigo, exercicios, erros e configuracoes. Eu posso ajudar a ajustar seu PDI se essa dificuldade mudar seu objetivo, nivel atual ou ordem da trilha. Voce quer ajustar seu PDI a partir dessa duvida?';
+      'Essa duvida tecnica do conteudo do curso deve ser revisada na Plataforma Daxus, onde voce encontra o suporte academico para codigo, exercicios, erros e configuracoes. Eu posso ajudar a ajustar seu PDI se essa dificuldade mudar seu objetivo, nivel atual ou ordem da trilha. Voce quer ajustar seu PDI a partir dessa duvida?';
     await saveMessage(conversationId, 'assistant', redirectMessage);
     return staticAssistantStream(redirectMessage);
   }
