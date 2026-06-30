@@ -1,4 +1,4 @@
-import type { Course } from '../supabase';
+import { isRecordedStudyContent, type Course } from '../supabase';
 
 function durationToMinutes(duration?: string | null): number | null {
   if (!duration) return null;
@@ -57,10 +57,11 @@ function isCareerOrSoftSkillCourse(course: Course): boolean {
 }
 
 function buildCatalogSections(courses: Course[]): string {
-  const masterEntries = courses.filter((course) => /^master\s+/i.test(course.title));
+  const recordedCourses = courses.filter((course) => isRecordedStudyContent(course));
+  const masterEntries = recordedCourses.filter((course) => /^master\s+/i.test(course.title));
   const masterCatalog = masterEntries
     .map((master) => {
-      const levels = courses
+      const levels = recordedCourses
         .filter((course) => course.master_name === master.title)
         .sort((a, b) => (a.master_level || 999) - (b.master_level || 999));
       const levelDurationMinutes = levels
@@ -83,14 +84,14 @@ function buildCatalogSections(courses: Course[]): string {
     })
     .join('\n');
 
-  const careerCourses = courses
+  const careerCourses = recordedCourses
     .filter((course) => isCareerOrSoftSkillCourse(course))
     .map((course) => `- "${course.title}"${course.duration ? ` | Duracao: ${course.duration}` : ''}${
       course.description ? `\n  Descricao: ${course.description}` : ''
     }`)
     .join('\n');
 
-  const standaloneCourses = courses
+  const standaloneCourses = recordedCourses
     .filter((course) => !/^master\s+/i.test(course.title) && !course.master_name && !isCareerOrSoftSkillCourse(course))
     .map((course) => `- "${course.title}"${course.duration ? ` | Duracao: ${course.duration}` : ''}${
       course.category ? ` | Categoria: ${course.category}` : ''
@@ -107,10 +108,11 @@ function buildCatalogSections(courses: Course[]): string {
 }
 
 function buildRealismReference(courses: Course[]): string {
-  const masterEntries = courses.filter((course) => /^master\s+/i.test(course.title));
+  const recordedCourses = courses.filter((course) => isRecordedStudyContent(course));
+  const masterEntries = recordedCourses.filter((course) => /^master\s+/i.test(course.title));
   const lines = masterEntries
     .map((master) => {
-      const levels = courses.filter((course) => course.master_name === master.title);
+      const levels = recordedCourses.filter((course) => course.master_name === master.title);
       const minutes =
         durationToMinutes(master.duration) ||
         levels
@@ -152,6 +154,7 @@ export function buildSystemPrompt(
 - Ajuda o aluno a transformar situacao atual, tempo disponivel e objetivo em uma trilha realista.
 - Faz perguntas mais profundas quando a resposta for vaga. Nao avance por formulario; avance quando houver informacao suficiente.
 - Nao faca perguntas repetitivas. Se o aluno ja respondeu uma informacao, trate essa resposta como fonte de verdade e avance.
+- Se ja houver contexto, objetivo, prazo, habilidades ou nivel atual, horas semanais e confirmacao do perfil, nao faca novas perguntas de refinamento. Gere a avaliacao de realismo e a trilha completa.
 - Se a meta nao for realista para o prazo ou horas semanais, explique com respeito e proponha um primeiro marco viavel.
 - Pense sempre em tres pilares: aprendizado tecnico, posicionamento profissional e habilidades comportamentais.
 
@@ -202,10 +205,12 @@ Se for realista, diga brevemente por que e gere a trilha completa na mesma respo
 - Se varios niveis forem recomendados no PDF, eles podem aparecer como cursos unicos para facilitar a leitura, intercalados com outras formacoes.
 - Calcule estimatedWeeks com 2 horas de estudo para cada hora real de curso, dividido pelas horas semanais, arredondando para cima e minimo 1 semana.
 - Cada motivo de recomendacao deve ser diferente e conectado ao perfil: lacuna tecnica, objetivo, ferramenta, projeto, lideranca, empregabilidade ou posicionamento.
+- Priorize primeiro os cursos ou niveis tecnicos mais importantes para atingir o objetivo. Complementos entram depois da base tecnica central.
+- Sugira apenas conteudos gravados de estudo. Nao recomende PDFs, ebooks, downloads, modelos, perguntas frequentes nem materiais de apoio como cursos da trilha.
 - A trilha nunca deve ser so tecnica.
 - Inclua sempre "Linkedin Magnetico" quando estiver no catalogo.
 - Alem de LinkedIn, inclua cursos reais de carreira/posicionamento, habilidades comportamentais e lideranca estrategica apenas quando forem pertinentes ao objetivo principal, lacuna atual ou forma de aplicar a habilidade tecnica.
-- Intercale os cursos de apoio pertinentes com cursos tecnicos. Ordem preferida: 1 curso tecnico, Linkedin Magnetico, curso de carreira/posicionamento, proximo tecnico, habilidades comportamentais, proximo tecnico, lideranca estrategica.
+- Ordem obrigatoria da trilha: 1) primeiro curso ou master tecnico mais importante, 2) Linkedin Magnetico, 3) segundo curso ou master tecnico mais importante, 4) restante da trilha. Depois do segundo tecnico, intercale carreira, habilidades comportamentais ou lideranca apenas se forem pertinentes.
 - Nunca coloque LinkedIn apenas no final quando houver um primeiro curso tecnico valido.
 - Nao use blocos genericos excluidos como cursos recomendados.
 - Nao recomende cursos tecnicos individuais fora de um master se o aluno nao pediu explicitamente por nome ou ferramenta. Priorize masters completos ou niveis de master para a trilha tecnica.
@@ -221,7 +226,7 @@ Se for realista, diga brevemente por que e gere a trilha completa na mesma respo
 8. Validacao de realismo.
 9. Trilha completa com [PLAN_READY].
 
-No fechamento da trilha, pergunte se deseja ajustar algo e diga que o PDF podera ser baixado pelo botao.
+Antes de fechar a trilha, revise mentalmente se o texto esta em portugues correto, se faz sentido com o objetivo inicial, se nao menciona aulas especificas desnecessarias e se todos os motivos concordam com o objetivo. No fechamento, pergunte se deseja ajustar algo e diga que o PDF podera ser baixado pelo botao.
 
 ## CATALOGO DE CURSOS DAXUS
 ${coursesCatalog || 'Nao ha cursos carregados neste momento. Informe que o catalogo esta sendo atualizado.'}
@@ -263,8 +268,10 @@ Se o aluno nao informou habilidades ou ferramentas concretas, use "Nao identific
 Nao repita o mesmo reason em varios cursos.
 Omita qualquer curso, categoria ou bloco que nao tenha titulo exato no catalogo.
 Nao use titulos genericos como "Habilidades Blandas y Carrera" ou "Habilidades Comportamentais com Especialistas".
-O primeiro curso de carreira, habilidades comportamentais, LinkedIn, lideranca ou empregabilidade deve ficar logo depois do primeiro curso ou master tecnico quando existir apoio pertinente.
-A trilha deve preservar "Linkedin Magnetico" quando estiver disponivel. Cursos de carreira, habilidades comportamentais e lideranca devem ser mantidos apenas se conectarem claramente com o objetivo principal ou a lacuna do aluno, intercalados com os tecnicos.
+A trilha deve comecar com o primeiro curso ou master tecnico mais importante, depois "Linkedin Magnetico" se estiver disponivel, depois o segundo curso ou master tecnico mais importante, e so entao o restante da trilha.
+A trilha deve preservar "Linkedin Magnetico" quando estiver disponivel. Cursos de carreira, habilidades comportamentais e lideranca devem ser mantidos apenas se conectarem claramente com o objetivo principal ou a lacuna do aluno.
 Nao extraia nem conserve cursos tecnicos individuais fora de um master, salvo se o aluno tiver pedido explicitamente por nome ou ferramenta.
+Nao extraia nem conserve PDFs, ebooks, downloads, modelos, perguntas frequentes nem materiais de apoio como cursos da trilha.
+Antes de devolver o JSON, revise ortografia, concordancia e coerencia dos textos em portugues com o objetivo inicial; nao mencione aulas exatas, apenas cursos, masters ou niveis recomendados.
 Se a trilha incluir programacao e o aluno declarou nivel basico ou nulo, deve aparecer "Fundamentos de Python" antes de cursos avancados.
 Se Dax recomendou master parcial, use o titulo do master como "title" e o alcance em "level".`;

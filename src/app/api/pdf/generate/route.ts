@@ -4,6 +4,7 @@ import * as path from 'path';
 import {
   getAllCourses,
   isExcludedRecommendationCourse,
+  isRecordedStudyContent,
   markStudyPlanPdfGeneratedInSupabase,
   type Course,
   type StudyPlanData,
@@ -470,6 +471,7 @@ function findPreferredSupportCourse(
   const candidates = catalogCourses.filter((course) =>
     supportCategoryForTitle(course.title) === category &&
     !isExcludedRecommendationCourse(course.title) &&
+    isRecordedStudyContent(course) &&
     !usedTitles.has(normalizeText(course.title)) &&
     isSupportCourseRelevant(course, category, contextText)
   );
@@ -570,6 +572,7 @@ function buildTechnicalFallbackCourses(
         course &&
           !usedTitles.has(normalizeText(course.title)) &&
           !isCareerSupportTitle(course.title) &&
+          isRecordedStudyContent(course) &&
           isAllowedTechnicalCourse(course, `${plan.professionalGoal} ${plan.specificSkills} ${plan.currentSituation} ${plan.additionalNotes}`)
       )
     )
@@ -710,6 +713,7 @@ function buildNextRouteSuggestions(
     if (selected.has(key)) return;
     if (/^master\s+/i.test(course.title)) return;
     if (isExcludedRecommendationCourse(course.title)) return;
+    if (!isRecordedStudyContent(course)) return;
     if (hasCourseInPlan(plan, course)) return;
     if (!isAllowedTechnicalCourse(course, context)) return;
     selected.set(key, course);
@@ -745,7 +749,7 @@ function buildNextRouteSuggestions(
     ].filter((term) => context.includes(normalizeText(term)));
 
     catalogCourses
-      .filter((course) => !isExcludedRecommendationCourse(course.title) && !/^master\s+/i.test(course.title))
+      .filter((course) => !isExcludedRecommendationCourse(course.title) && isRecordedStudyContent(course) && !/^master\s+/i.test(course.title))
       .map((course) => {
         const searchable = normalizeText(
           `${course.title} ${course.description || ''} ${course.category || ''} ${(course.tags || []).join(' ')}`,
@@ -792,7 +796,7 @@ function placeCareerSupportAfterFirstTechnical(
   let technicalCourses = courses.filter((course) => {
     if (isCareerSupportTitle(course.title)) return false;
     const catalogCourse = findExactCatalogCourse(course.title, catalogCourses);
-    return !catalogCourse || isAllowedTechnicalCourse(catalogCourse, contextText);
+    return !catalogCourse || (isRecordedStudyContent(catalogCourse) && isAllowedTechnicalCourse(catalogCourse, contextText));
   });
   if (!technicalCourses.length) {
     technicalCourses = buildTechnicalFallbackCourses(plan, catalogCourses, usedTitles);
@@ -820,13 +824,17 @@ function placeCareerSupportAfterFirstTechnical(
 
   return [
     technicalCourses[0],
-    ...(supportCourses[0] ? [supportCourses[0]] : []),
-    ...(supportCourses[1] ? [supportCourses[1]] : []),
+    ...(() => {
+      const linkedinCourse = supportCourses.find((course) => supportCategoryForTitle(course.title) === 'linkedin');
+      return linkedinCourse ? [linkedinCourse] : [];
+    })(),
     ...(technicalCourses[1] ? [technicalCourses[1]] : []),
-    ...(supportCourses[2] ? [supportCourses[2]] : []),
+    ...supportCourses.filter((course) => supportCategoryForTitle(course.title) !== 'linkedin').slice(0, 1),
     ...(technicalCourses[2] ? [technicalCourses[2]] : []),
-    ...(supportCourses[3] ? [supportCourses[3]] : []),
-    ...technicalCourses.slice(3),
+    ...supportCourses.filter((course) => supportCategoryForTitle(course.title) !== 'linkedin').slice(1, 2),
+    ...(technicalCourses[3] ? [technicalCourses[3]] : []),
+    ...supportCourses.filter((course) => supportCategoryForTitle(course.title) !== 'linkedin').slice(2),
+    ...technicalCourses.slice(4),
   ].map((course, index) => ({ ...course, order: index + 1 }));
 }
 

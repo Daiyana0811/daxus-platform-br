@@ -4,6 +4,7 @@ import {
   getConversationMessages,
   getOrCreateConversation,
   isExcludedRecommendationCourse,
+  isRecordedStudyContent,
   saveMessage,
   saveStudyPlan,
   type Message,
@@ -882,6 +883,7 @@ function findPreferredSupportCourse(
     return (
       supportCategoryForTitle(course.title) === category &&
       !isExcludedRecommendationCourse(course.title) &&
+      isRecordedStudyContent(course) &&
       isSupportCourseRelevant(course, category, contextText) &&
       !usedTitles.has(normalizedTitle)
     );
@@ -1106,6 +1108,7 @@ function buildTechnicalFallbackCourses(
         course &&
         !usedTitles.has(normalizeForSearch(course.title)) &&
         !isCareerSupportTitle(course.title) &&
+        isRecordedStudyContent(course) &&
         isAllowedTechnicalCourse(course, contextText)
       )
     )
@@ -1131,6 +1134,7 @@ function ensureCareerSupportCourse(
     if (!course.title || isExcludedRecommendationCourse(course.title)) return false;
     const catalogCourse = findCourseInCatalog(course.title, catalogCourses);
     if (!catalogCourse) return false;
+    if (!isRecordedStudyContent(catalogCourse)) return false;
     if (isCareerSupportTitle(course.title)) return true;
     return isAllowedTechnicalCourse(catalogCourse, contextText);
   });
@@ -1165,13 +1169,18 @@ function ensureCareerSupportCourse(
 
   const finalCourses: StudyPlanData['courses'] = [];
   finalCourses.push(technicalCourses[0]);
-  if (supportCourses[0]) finalCourses.push(supportCourses[0]);
-  if (supportCourses[1]) finalCourses.push(supportCourses[1]);
+  const linkedinCourse = supportCourses.find((course) => supportCategoryForTitle(course.title) === 'linkedin');
+  const remainingSupportCourses = supportCourses.filter(
+    (course) => supportCategoryForTitle(course.title) !== 'linkedin',
+  );
+  if (linkedinCourse) finalCourses.push(linkedinCourse);
   if (technicalCourses[1]) finalCourses.push(technicalCourses[1]);
-  if (supportCourses[2]) finalCourses.push(supportCourses[2]);
+  if (remainingSupportCourses[0]) finalCourses.push(remainingSupportCourses[0]);
   if (technicalCourses[2]) finalCourses.push(technicalCourses[2]);
-  if (supportCourses[3]) finalCourses.push(supportCourses[3]);
-  finalCourses.push(...technicalCourses.slice(3));
+  if (remainingSupportCourses[1]) finalCourses.push(remainingSupportCourses[1]);
+  if (technicalCourses[3]) finalCourses.push(technicalCourses[3]);
+  if (remainingSupportCourses[2]) finalCourses.push(remainingSupportCourses[2]);
+  finalCourses.push(...technicalCourses.slice(4));
 
   return finalCourses.map((course, index) => ({ ...course, order: index + 1 }));
 }
@@ -1826,6 +1835,7 @@ export async function generateStudyPlan(
   const conversationText = getConversationText(messages);
 
   const coursesReference = courses
+    .filter((c) => isRecordedStudyContent(c))
     .map((c) => {
       const levelInfo = c.master_name
         ? ` | Master: ${c.master_name}${c.master_level ? ` nivel ${c.master_level}` : ''}`

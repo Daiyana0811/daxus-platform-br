@@ -220,6 +220,32 @@ export function isExcludedRecommendationCourse(courseOrTitle: Course | string): 
   return EXCLUDED_RECOMMENDATION_TITLES.has(normalizeRecommendationTitle(title));
 }
 
+export function isRecordedStudyContent(course: Course): boolean {
+  const text = normalizeRecommendationTitle(
+    `${course.title || ''} ${course.category || ''} ${course.description || ''} ${(course.tags || []).join(' ')}`,
+  );
+
+  const documentSignals = [
+    'pdf',
+    'ebook',
+    'e book',
+    'descarga',
+    'download',
+    'material descargable',
+    'material de apoio',
+    'material de apoyo',
+    'apostila',
+    'plantilla',
+    'template',
+    'hoja de calculo',
+    'planilha',
+    'preguntas frecuentes',
+    'perguntas frequentes',
+  ];
+
+  return !documentSignals.some((signal) => text.includes(normalizeRecommendationTitle(signal)));
+}
+
 function normalizeDurationText(text: string): string | null {
   const normalized = text
     .normalize('NFD')
