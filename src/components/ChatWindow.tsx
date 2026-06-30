@@ -71,7 +71,7 @@ async function extractFileForChat(file: File): Promise<{ fileName: string; text:
   if (extension === 'pdf' || file.type === 'application/pdf') {
     const text = await extractPdfTextInBrowser(file);
     if (!text) {
-      throw new Error('No pude extraer texto del PDF. Intenta subir una versión con texto seleccionable.');
+      throw new Error('Nao consegui extrair texto do PDF. Tente enviar uma versao com texto selecionavel.');
     }
     return { fileName: file.name, text };
   }
@@ -132,6 +132,81 @@ function isNewStudyPlanRequest(value: string): boolean {
     'new plan',
     'novo plano',
   ].some((intent) => normalized === intent || normalized.includes(intent));
+}
+
+function fileAttachmentMessage(fileName: string, prompt: string): string {
+  return `[Arquivo anexado: ${fileName}]\n\nCarreguei um documento para voce analisar. Revise-o para responder minhas perguntas de perfil.\n\n${prompt}`;
+}
+
+function pdfLoadingHtml(): string {
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerando plano de estudos</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: Inter, Arial, sans-serif;
+      color: #ffffff;
+      background:
+        radial-gradient(circle at 58% 72%, rgba(52,174,238,.36), transparent 30%),
+        radial-gradient(circle at 18% 18%, rgba(100,255,218,.18), transparent 28%),
+        linear-gradient(135deg, #021f33 0%, #082743 54%, #112854 100%);
+    }
+    .card {
+      width: min(520px, calc(100vw - 40px));
+      padding: 44px 40px;
+      border: 1px solid rgba(52,174,238,.32);
+      border-radius: 22px;
+      background: rgba(2, 24, 43, .86);
+      box-shadow: 0 24px 80px rgba(0,0,0,.35);
+      text-align: center;
+    }
+    .brand {
+      margin: 0 0 28px;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: .12em;
+    }
+    .spinner {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 24px;
+      border: 4px solid rgba(255,255,255,.18);
+      border-top-color: #34aeee;
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+    }
+    h1 {
+      margin: 0 0 12px;
+      color: #34aeee;
+      font-size: 28px;
+      line-height: 1.15;
+    }
+    p {
+      margin: 0;
+      color: rgba(255,255,255,.78);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">DAXUS</div>
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>Gerando seu plano de estudos</h1>
+    <p>Estamos preparando seu PDF personalizado. Esta janela sera atualizada automaticamente quando estiver pronto.</p>
+  </main>
+</body>
+</html>`;
 }
 
 function buildLatestPlanRecommendationMessage(plan: StudyPlanData): string {
@@ -219,7 +294,7 @@ export default function ChatWindow({
   useEffect(() => {
     if (!initialized.current && messages.length === 0) {
       initialized.current = true;
-      sendMessage('Ola, quero criar meu PDI personalizado');
+      sendMessage('Ola, quero criar meu plano de estudos personalizado');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -263,9 +338,9 @@ export default function ChatWindow({
     }
 
     // Add user message (only if not auto-start)
-    const isAutoStart = messageText === 'Ola, quero criar meu PDI personalizado' && messages.length === 0;
+    const isAutoStart = messageText === 'Ola, quero criar meu plano de estudos personalizado' && messages.length === 0;
     const userDisplayContent = fileData
-      ? `[Arquivo anexado: ${fileData.name}]\n\nHe cargado un documento para que lo analices. Por favor, revísalo para responder a mis preguntas de perfil.\n\n${text}`
+      ? fileAttachmentMessage(fileData.name, text)
       : text;
     const isStartingNewPlanFromHistory =
       Boolean(studyPlan && planReady && !fileData && isNewStudyPlanRequest(text));
@@ -278,7 +353,7 @@ export default function ChatWindow({
 
     if (!isAutoStart) {
       const content = fileData 
-        ? `[Arquivo anexado: ${fileData.name}]\n\nHe cargado un documento para que lo analices. Por favor, revísalo para responder a mis preguntas de perfil.\n\n${text}`
+        ? fileAttachmentMessage(fileData.name, text)
         : text;
       if (isStartingNewPlanFromHistory) {
         setStudyPlan(null);
@@ -400,7 +475,7 @@ export default function ChatWindow({
     setGeneratingPDF(true);
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write('<p style="font-family:Arial,sans-serif;padding:24px">Preparando seu PDI personalizado...</p>');
+      printWindow.document.write(pdfLoadingHtml());
       printWindow.document.close();
     }
 
@@ -454,7 +529,7 @@ export default function ChatWindow({
       const extracted = await extractFileForChat(file);
 
       await sendMessage(
-        'Anexei meu curriculo. Analise as informacoes do documento e pergunte apenas o que faltar para criar meu PDI personalizado.',
+        'Anexei meu curriculo. Analise as informacoes do documento e pergunte apenas o que faltar para criar meu plano de estudos personalizado.',
         { name: extracted.fileName, content: extracted.text }
       );
     } catch (error) {

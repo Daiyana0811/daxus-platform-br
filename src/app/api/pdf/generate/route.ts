@@ -249,7 +249,7 @@ function durationToHours(duration: string): number {
 function estimateWeeks(duration: string, weeklyHours: number): number {
   const hours = durationToHours(duration);
   if (!hours || !weeklyHours) return 0;
-  return Math.max(1, Math.ceil(hours / weeklyHours));
+  return Math.max(1, Math.ceil((hours * 2) / weeklyHours));
 }
 
 function selectedMasterLevels(levelText: string | null | undefined, allLevels: Course[]): Course[] {

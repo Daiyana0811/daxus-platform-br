@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Formato no soportado. Sube tu hoja de vida en PDF, DOCX, TXT, CSV, JSON o Markdown.',
+          error: 'Formato nao suportado. Envie seu curriculo em PDF, DOCX, TXT, CSV, JSON ou Markdown.',
         },
         { status: 415 }
       );

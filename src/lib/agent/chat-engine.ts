@@ -721,7 +721,7 @@ function estimatedWeeksFromDuration(duration: string, weeklyHours: number): numb
   const minutes = minutesMatch ? Number(minutesMatch[1]) / 60 : 0;
   const totalHours = hours + minutes;
   if (!totalHours || !weeklyHours) return 0;
-  return Math.max(1, Math.ceil(totalHours / weeklyHours));
+  return Math.max(1, Math.ceil((totalHours * 2) / weeklyHours));
 }
 
 type SupportCategory = 'linkedin' | 'career' | 'soft' | 'leadership';

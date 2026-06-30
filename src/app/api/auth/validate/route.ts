@@ -25,7 +25,7 @@ async function validateEmail(email: string) {
     return NextResponse.json(
       {
         valid: false,
-        message: 'Este e-mail nao tem uma assinatura ativa para acessar o orientador Daxus.',
+        message: 'Este e-mail nao aparece como valido para acessar. Por favor fale conosco no CS: https://sndflw.com/l/atendimento-cs',
       },
       { status: 403 },
     );

@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { StudyPlanData } from '@/lib/supabase';
 
+const CS_SUPPORT_URL = 'https://sndflw.com/l/atendimento-cs';
+const INVALID_EMAIL_MESSAGE =
+  `Este e-mail nao aparece como valido para acessar. Por favor fale conosco no CS: ${CS_SUPPORT_URL}`;
+
 interface EmailGateProps {
   onValidated: (data: {
     userId: string;
@@ -23,6 +27,21 @@ export default function EmailGate({ onValidated }: EmailGateProps) {
 
   const normalizedEmail = email.toLowerCase().trim();
 
+  const renderErrorMessage = () => {
+    const [beforeUrl] = error.split(CS_SUPPORT_URL);
+    if (!error.includes(CS_SUPPORT_URL)) return error;
+
+    return (
+      <>
+        {beforeUrl}
+        <a href={CS_SUPPORT_URL} target="_blank" rel="noreferrer">
+          fale conosco no CS
+        </a>
+        .
+      </>
+    );
+  };
+
   const validateEmail = async () => {
     setError('');
     setMessage('');
@@ -37,7 +56,7 @@ export default function EmailGate({ onValidated }: EmailGateProps) {
       const data = await res.json();
 
       if (!res.ok || !data.valid || !data.verified) {
-        setError(data.message || 'Nao foi possivel validar o e-mail.');
+        setError(INVALID_EMAIL_MESSAGE);
         return;
       }
 
@@ -170,7 +189,7 @@ export default function EmailGate({ onValidated }: EmailGateProps) {
                   <path d="M8 5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
                 </svg>
-                {error}
+                {renderErrorMessage()}
               </motion.div>
             )}
           </AnimatePresence>
