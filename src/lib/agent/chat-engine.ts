@@ -262,22 +262,41 @@ function isTechnicalCourseSupportQuestion(message: string): boolean {
 
 function isHumanSupportRequest(message: string): boolean {
   const text = normalizeForSearch(message);
-  return [
+  const directRequests = [
     'falar com alguem',
     'falar com uma pessoa',
     'falar com atendente',
     'falar com suporte',
+    'falar com o suporte',
     'contatar suporte',
-    'entrar em contato',
-    'atendimento',
-    'servico ao cliente',
+    'contactar suporte',
+    'entrar em contato com suporte',
+    'entrar em contato com cs',
+    'quero suporte',
+    'preciso de suporte',
+    'atendimento cs',
+    'atendimento da daxus',
+    'atendimento daxus',
     'pessoa real',
     'atendente humano',
     'suporte cs',
-    'cs',
     'hablar con alguien',
     'hablar con soporte',
-  ].some((term) => text.includes(normalizeForSearch(term)));
+    'contactar soporte',
+    'quiero soporte',
+    'necesito soporte',
+  ];
+
+  if (directRequests.some((term) => text.includes(normalizeForSearch(term)))) {
+    return true;
+  }
+
+  const asksForHuman =
+    /\b(quero|preciso|gostaria|posso|pode|poderia|como|onde|quiero|necesito|puedo|como|donde)\b.*\b(falar|contato|contatar|contactar|atendente|pessoa|persona|soporte|suporte|cs)\b/i.test(text);
+  const supportContext =
+    /\b(suporte|soporte|cs|atendimento cs|atendimento da daxus|atendimento daxus)\b/i.test(text);
+
+  return asksForHuman && supportContext;
 }
 
 function isStudyPlanRelatedMessage(message: string): boolean {
@@ -492,7 +511,7 @@ export async function processMessage(
 
   if (isHumanSupportRequest(userMessage)) {
     const supportMessage =
-      'Claro. Voce pode falar com o atendimento CS da Daxus aqui: https://sndflw.com/l/atendimento-cs';
+      'Claro. Voce pode falar com o atendimento CS da Daxus aqui: [Atendimento CS](https://sndflw.com/l/atendimento-cs)';
     await saveMessage(conversationId, 'assistant', supportMessage);
     return staticAssistantStream(supportMessage);
   }

@@ -1632,12 +1632,6 @@ function drawRoutePage(doc: PdfDoc, plan: StudyPlanData, courseImages: Map<numbe
     y += cardHeight + 14;
   }
 
-  if (y + 110 > doc.page.height - 92) {
-    doc.addPage();
-    drawTemplatePage(doc, PDI_TEMPLATES.letterhead);
-    y = 116;
-  }
-
   drawScheduleBox(doc, plan, y);
 }
 
@@ -1820,14 +1814,38 @@ function drawThumbFallback(doc: PdfDoc, x: number, y: number, width = 66, height
     .restore();
 }
 
-function drawScheduleBox(doc: PdfDoc, plan: StudyPlanData, y: number) {
+function drawScheduleBox(doc: PdfDoc, plan: StudyPlanData, y: number): number {
   const x = 48;
   const width = doc.page.width - 96;
-  doc.roundedRect(x, y, width, 104, 8).fill(COLORS.blue);
+  const innerWidth = width - 36;
+  const scheduleText = cleanText(plan.weeklySchedule || 'Organize blocos curtos e constantes de estudo ao longo da semana.');
+  const notesText = cleanText(
+    plan.additionalNotes || 'Priorize consistencia, pratica aplicada e revisao antes de avancar.',
+  );
+
+  doc.font(PDF_FONT_REGULAR).fontSize(10);
+  const scheduleHeight = doc.heightOfString(scheduleText, {
+    width: innerWidth,
+    lineGap: 2,
+  });
+  doc.font(PDF_FONT_REGULAR).fontSize(9);
+  const notesHeight = doc.heightOfString(notesText, {
+    width: innerWidth,
+    lineGap: 1,
+  });
+  const boxHeight = Math.max(114, 58 + scheduleHeight + 16 + notesHeight + 20);
+
+  if (y + boxHeight > doc.page.height - 72) {
+    doc.addPage();
+    drawTemplatePage(doc, PDI_TEMPLATES.letterhead);
+    y = 116;
+  }
+
+  doc.roundedRect(x, y, width, boxHeight, 8).fill(COLORS.blue);
   doc
     .save()
     .opacity(0.26)
-    .roundedRect(x, y, width, 104, 8)
+    .roundedRect(x, y, width, boxHeight, 8)
     .stroke('#A4A4FF')
     .restore();
   doc
@@ -1835,24 +1853,25 @@ function drawScheduleBox(doc: PdfDoc, plan: StudyPlanData, y: number) {
     .font(PDF_FONT_BOLD)
     .fontSize(13)
     .text('Horario semanal sugerido', x + 18, y + 18);
+  const scheduleY = y + 42;
   doc
     .fillColor(COLORS.soft)
     .font(PDF_FONT_REGULAR)
     .fontSize(10)
-    .text(plan.weeklySchedule || 'Sem horario sugerido.', x + 18, y + 42, {
-      width: width - 36,
+    .text(scheduleText, x + 18, scheduleY, {
+      width: innerWidth,
       lineGap: 2,
     });
-  if (plan.additionalNotes) {
-    doc
-      .fillColor(COLORS.soft)
-      .font(PDF_FONT_REGULAR)
-      .fontSize(9)
-      .text(plan.additionalNotes, x + 18, y + 72, {
-        width: width - 36,
-        lineGap: 1,
-      });
-  }
+  doc
+    .fillColor(COLORS.soft)
+    .font(PDF_FONT_REGULAR)
+    .fontSize(9)
+    .text(notesText, x + 18, scheduleY + scheduleHeight + 14, {
+      width: innerWidth,
+      lineGap: 1,
+    });
+
+  return y + boxHeight + 18;
 }
 
 function drawCongratulationsPage(doc: PdfDoc, plan: StudyPlanData) {
